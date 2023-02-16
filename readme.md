@@ -38,7 +38,7 @@ rabbit-validator [path/to/definitions.json]
 #### Run from the repo
 
 ```bash
-git clone git@github.com:Rauno56/rabbit-validator.git
+git clone git@github.com:rauno56/rabbit-validator.git
 cd rabbit-validator
 npx . [path/to/definitions.json]
 ```
