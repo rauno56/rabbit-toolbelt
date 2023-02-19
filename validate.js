@@ -41,22 +41,22 @@ const rootStructure = {
 		name: normalString(),
 		password_hash: string(),
 		hashing_algorithm: string(),
-		tags: array(string()),
+		tags: array(normalString()),
 		limits: object(),
 	})),
 	vhosts: array(object({
 		name: normalString(),
 	})),
 	permissions: array(object({
-		user: string(),
-		vhost: string(),
+		user: normalString(),
+		vhost: normalString(),
 		configure: string(),
 		write: string(),
 		read: string(),
 	})),
 	topic_permissions: array(object({
-		user: string(),
-		vhost: string(),
+		user: normalString(),
+		vhost: normalString(),
 		exchange: string(),
 		write: string(),
 		read: string(),
@@ -66,13 +66,13 @@ const rootStructure = {
 		value: string(),
 	}))),
 	parameters: array(object({
-		vhost: string(),
+		vhost: normalString(),
 		component: string(),
 		name: normalString(),
 		value: union([object(), string()]),
 	})),
 	policies: array(object({
-		vhost: string(),
+		vhost: normalString(),
 		name: normalString(),
 		pattern: string(),
 		'apply-to': string(),
@@ -81,7 +81,7 @@ const rootStructure = {
 	})),
 	queues: array(object({
 		name: normalString(),
-		vhost: string(),
+		vhost: normalString(),
 		durable: boolean(),
 		auto_delete: boolean(),
 		arguments: optional(object({
@@ -91,7 +91,7 @@ const rootStructure = {
 	exchanges: array(object(
 		{
 			name: normalString(),
-			vhost: string(),
+			vhost: normalString(),
 			type: enums(['topic', 'headers', 'direct']),
 			durable: boolean(),
 			auto_delete: boolean(),
@@ -100,9 +100,9 @@ const rootStructure = {
 		},
 	)),
 	bindings: array(object({
-		source: string(),
-		vhost: string(),
-		destination: string(),
+		source: normalString(),
+		vhost: normalString(),
+		destination: normalString(),
 		destination_type: string(),
 		routing_key: string(),
 		arguments: optional(object()),
