@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert';
 import test from 'node:test';
 
-import { assertRootStructure, assertPart, assertFromFile } from './validate.js';
+import { assertRootStructure, assertPart, assertFromFile } from '../validate.js';
 
 test('assertFromFile', () => {
 	test('empty', () => {

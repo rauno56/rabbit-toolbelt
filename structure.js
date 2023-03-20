@@ -1,5 +1,4 @@
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
 import {
 	array,
 	assert as assertStructure,
@@ -13,6 +12,8 @@ import {
 	union,
 	validate as validateStructure,
 } from 'superstruct';
+
+import { readJSONSync } from './utils.js';
 
 const printableAsciiRegex = /^[a-z0-9": ,{}()\n[\]_./+\-*#%]+$/i;
 const validNormalStringRegex = /^[a-z0-9:_./\-*#]+$/i;
@@ -109,10 +110,6 @@ const rootStructure = {
 	})),
 };
 const root = object(rootStructure);
-
-export const readJSONSync = (path) => {
-	return JSON.parse(readFileSync(path, 'utf8'));
-};
 
 export const assertPart = (part, partialObj) => {
 	assert.equal(typeof part, 'string');
