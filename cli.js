@@ -4,7 +4,7 @@ import path from 'node:path';
 import { strict as assert } from 'assert';
 import {
 	validateFromFile,
-} from './validate.js';
+} from './src/validate.js';
 
 const [,,filePath] = process.argv;
 const fullFilePath = path.resolve(filePath);

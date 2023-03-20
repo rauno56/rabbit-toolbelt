@@ -1,8 +1,8 @@
 import { strict as assert } from 'assert';
 import test from 'node:test';
 
-import { readJSONSync } from '../utils.js';
-import assertRelations from '../relations.js';
+import { readJSONSync } from '../src/utils.js';
+import assertRelations from '../src/relations.js';
 
 const copy = (obj) => {
 	return JSON.parse(JSON.stringify(obj));
