@@ -98,6 +98,20 @@ const assertRelations = (definitions) => {
 		assert.ok(!maps.binding.get(from, to, args), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
 		maps.binding.set(from, to, args, binding);
 	}
+
+	// testing whether queue is used anywhere
+	for (const queue of definitions.queues) {
+		if (!db.binding.get(queue) && !db.bindingByDestination.get(queue)) {
+			console.warn(`Unused queue: "${queue.name}" in vhost "${queue.vhost}"`);
+		}
+	}
+
+	// testing whether exchange is used anywhere
+	for (const exchange of definitions.exchanges) {
+		if (!db.binding.get(exchange) && !db.bindingByDestination.get(exchange)) {
+			console.warn(`Unused exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+		}
+	}
 };
 
 export default assertRelations;
