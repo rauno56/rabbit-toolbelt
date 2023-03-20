@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import test from 'node:test';
+import { describe, it } from 'node:test';
 
 import { readJSONSync } from '../src/utils.js';
 import assertRelations from '../src/relations.js';
@@ -10,8 +10,8 @@ const copy = (obj) => {
 
 const valid = readJSONSync('./fixtures/full.json');
 
-test('asserting relations', () => {
-	test('fn exists and takes an object', () => {
+describe('asserting relations', () => {
+	it('fn exists and takes an object', () => {
 		const def = copy(valid);
 		assertRelations(def);
 		assert.throws(() => {
@@ -19,8 +19,8 @@ test('asserting relations', () => {
 		});
 	});
 
-	test('duplicates', () => {
-		test('vhosts', () => {
+	describe('duplicates', () => {
+		it('vhosts', () => {
 			const def = copy(valid);
 			def.vhosts.push(def.vhosts[0]);
 
@@ -29,7 +29,7 @@ test('asserting relations', () => {
 			}, /duplicate.*vhost/i);
 		});
 
-		test('queues', () => {
+		it('queues', () => {
 			const def = copy(valid);
 			const newQueue = copy(def.queues[0]);
 			newQueue.vhost = 'empty_vhost';
@@ -45,7 +45,7 @@ test('asserting relations', () => {
 			}, /duplicate.*queue/i);
 		});
 
-		test('exchanges', () => {
+		it('exchanges', () => {
 			const def = copy(valid);
 			const newQueue = copy(def.exchanges[0]);
 			newQueue.vhost = 'empty_vhost';
@@ -61,7 +61,7 @@ test('asserting relations', () => {
 			}, /duplicate.*exchange/i);
 		});
 
-		test('bindings', () => {
+		it('bindings', () => {
 			const def = copy(valid);
 			const newBinding = copy(def.bindings[0]);
 			newBinding.arguments.new_header = 'somerandomvalue';
@@ -78,7 +78,7 @@ test('asserting relations', () => {
 		});
 	});
 
-	test('exchange does not exist for binding', () => {
+	it('exchange does not exist for binding', () => {
 		const def = copy(valid);
 		const originalLength = def.exchanges.length;
 		const BINDING_SOURCE = 'defect_headers';
@@ -93,7 +93,7 @@ test('asserting relations', () => {
 		}, /missing source/i);
 	});
 
-	test('queue does not exist for binding', () => {
+	it('queue does not exist for binding', () => {
 		const def = copy(valid);
 		const originalLength = def.queues.length;
 		const BINDING_SOURCE = 'defect_headers';
