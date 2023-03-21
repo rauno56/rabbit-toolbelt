@@ -23,6 +23,6 @@ jobs:
     - name: Run tests
       run: npm run test -- -c -R base -t10
     - name: Test basic CLI functionality
-      run: sh test/test-cli.sh
+      run: sh test/test-cli.sh && echo "All OK!"
     - name: Lint
       run: npm run lint
