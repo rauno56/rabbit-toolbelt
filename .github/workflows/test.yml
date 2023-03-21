@@ -18,6 +18,11 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-    - run: npm ci
-    - run: npm run test -- -c -R base -t10
-    - run: npm run lint
+    - name: Install dependencies
+      run: npm ci
+    - name: Run tests
+      run: npm run test -- -c -R base -t10
+    - name: Test basic CLI functionality
+      run: sh test/test-cli.sh && echo "All OK!"
+    - name: Lint
+      run: npm run lint

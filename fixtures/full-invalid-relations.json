@@ -47,50 +47,20 @@
     },
     {
       "name": "defect_queue",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": true,
+      "arguments": {}
+    },
+    {
+      "name": "defect_queue",
       "vhost": "isolated",
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     }
   ],
-  "exchanges": [
-    {
-      "name": "anotherex2",
-      "vhost": "/",
-      "type": "topic",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "defect_topic",
-      "vhost": "/",
-      "type": "topic",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "defect_headers",
-      "vhost": "/",
-      "type": "headers",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    },
-    {
-      "name": "isolated_defect_headers",
-      "vhost": "isolated",
-      "type": "headers",
-      "durable": true,
-      "auto_delete": false,
-      "internal": false,
-      "arguments": {}
-    }
-  ],
+  "exchanges": [],
   "bindings": [
     {
       "source": "isolated_defect_headers",

@@ -1,33 +1,33 @@
 import { strict as assert } from 'assert';
-import test from 'node:test';
+import { describe, it } from 'node:test';
 
-import { assertRootStructure, assertPart, assertFromFile } from './validate.js';
+import { assertRootStructure, assertPart, assertFromFile } from '../src/validate.js';
 
-test('assertFromFile', () => {
-	test('empty', () => {
+describe('assertFromFile', () => {
+	it('empty', () => {
 		assertFromFile('./fixtures/empty.json');
 	});
 
-	test('full', () => {
+	it('full', () => {
 		assertFromFile('./fixtures/full.json');
 	});
 
-	test('full-invalid', () => {
+	it('full-invalid', () => {
 		assert.throws(() => {
 			assertFromFile('./fixtures/full-invalid.json');
 		});
 	});
 });
 
-test('empty object is invalid', () => {
+describe('empty object is invalid', () => {
 	assert.throws(() => {
 		assertRootStructure({});
 	});
 });
 
 // Test one of the keys, others are mostly rinse and repeat
-test('vhosts', () => {
-	test('invalid', () => {
+describe('vhosts', () => {
+	it('invalid', () => {
 		assert.throws(() => {
 			assertPart('vhosts', {});
 		});
@@ -41,15 +41,15 @@ test('vhosts', () => {
 		});
 	});
 
-	test('valid', () => {
+	it('valid', () => {
 		assertPart('vhosts', [
 			{ name: '/' },
 		]);
 	});
 });
 
-test('invalid strings', () => {
-	test('emoji', () => {
+describe('invalid strings', () => {
+	it('emoji', () => {
 		assert.throws(() => {
 			assertPart('users', [{
 				name: 'user-emoji-🫶',
@@ -57,7 +57,7 @@ test('invalid strings', () => {
 		}, /unexpected char/);
 	});
 
-	test('unprintable', () => {
+	it('unprintable', () => {
 		assert.throws(() => {
 			assertPart('users', [{
 				name: 'user.​name',
