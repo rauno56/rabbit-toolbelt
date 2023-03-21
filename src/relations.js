@@ -1,10 +1,29 @@
-import assert from 'node:assert/strict';
+import * as nodeAssert from 'node:assert/strict';
 
-const assertStr = (str) => assert.equal(typeof str, 'string', `Expected to be string: ${str}`);
-const assertObj = (obj) => assert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
+const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to be string: ${str}`);
+const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
 
-const assertRelations = (definitions) => {
-	assert.ok(definitions && typeof definitions, 'object');
+const assertRelations = (definitions, collectErrors = false) => {
+	nodeAssert.ok(definitions && typeof definitions, 'object');
+
+	const errors = new Map();
+	const assert = {};
+	const defineAssert = (method) => {
+		if (collectErrors) {
+			return assert[method] = (...args) => {
+				try {
+					return nodeAssert[method](...args);
+				} catch (err) {
+					// deduplicating all the "duplicate X" errors
+					errors.set(err.message, err);
+				}
+			};
+		}
+		return assert[method] = nodeAssert[method];
+	};
+	defineAssert('ok');
+	defineAssert('fail');
+	defineAssert('equal');
 
 	const db = {
 		queue: new Map(),
@@ -85,11 +104,11 @@ const assertRelations = (definitions) => {
 		} else if (from.type === 'topic') {
 			// TODO: TEST THIS
 			assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for topic exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-			args = binding.binding.routing_key;
+			args = binding.routing_key;
 		} else if (from.type === 'direct') {
 			// TODO: TEST THIS
 			assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for direct exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-			args = binding.binding.routing_key;
+			args = binding.routing_key;
 		} else {
 			assert.fail(`Unexpected binding type: ${from.type}`);
 		}
@@ -112,6 +131,16 @@ const assertRelations = (definitions) => {
 			console.warn(`Unused exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 		}
 	}
+
+	if (errors.size) {
+		const error = new Error('Errors validating relations in definitions');
+		error.failures = () => [...errors.values()];
+		return [error, definitions];
+	}
+
+	return [null, definitions];
 };
+
+export const validateRelations = (def) => assertRelations(def, true);
 
 export default assertRelations;

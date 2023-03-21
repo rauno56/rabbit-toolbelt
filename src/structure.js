@@ -135,10 +135,6 @@ export const validateRootStructure = (obj) => {
 	return validateStructure(obj, root);
 };
 
-export const validateFromFile = (path) => {
-	return validateRootStructure(readJSONSync(path));
-};
-
 function getListFromEnv(envVar, sep = ',') {
 	assert(typeof envVar, 'string');
 	if (!process.env[envVar]) {
