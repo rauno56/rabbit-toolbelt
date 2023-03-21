@@ -76,16 +76,28 @@ const assertRelations = (definitions, collectErrors = false) => {
 	};
 
 	for (const vhost of definitions.vhosts) {
+		if (!vhost.name) {
+			// will not report failure because it's probably already caught
+			continue;
+		}
 		assert.ok(!maps.vhost.get(vhost.name), `Duplicate vhost: "${vhost.name}"`);
 		maps.vhost.set(vhost.name, vhost);
 	}
 
 	for (const queue of definitions.queues) {
+		if (!queue.name || !queue.vhost) {
+			// will not report failure because it's probably already caught
+			continue;
+		}
 		assert.ok(!maps.queue.get(queue.name, queue.vhost), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 		maps.queue.set(queue.name, queue.vhost, queue);
 	}
 
 	for (const exchange of definitions.exchanges) {
+		if (!exchange.name || !exchange.vhost) {
+			// will not report failure because it's probably already caught
+			continue;
+		}
 		assert.ok(!maps.exchange.get(exchange.name, exchange.vhost), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 		maps.exchange.set(exchange.name, exchange.vhost, exchange);
 	}
@@ -128,22 +140,22 @@ const assertRelations = (definitions, collectErrors = false) => {
 	// testing whether queue is used anywhere
 	for (const queue of definitions.queues) {
 		if (!db.binding.get(queue) && !db.bindingByDestination.get(queue)) {
-			console.warn(`Unused queue: "${queue.name}" in vhost "${queue.vhost}"`);
+			if (queue.name && queue.vhost) {
+				console.warn(`Unused queue: "${queue.name}" in vhost "${queue.vhost}"`);
+			}
 		}
 	}
 
 	// testing whether exchange is used anywhere
 	for (const exchange of definitions.exchanges) {
 		if (!db.binding.get(exchange) && !db.bindingByDestination.get(exchange)) {
-			console.warn(`Unused exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+			if (exchange.name && exchange.vhost) {
+				console.warn(`Unused exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+			}
 		}
 	}
 
-	if (failures.size) {
-		return [...failures.values()];
-	}
-
-	return [null, definitions];
+	return [...failures.values()];
 };
 
 export const validateRelations = (def) => assertRelations(def, true);
