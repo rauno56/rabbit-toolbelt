@@ -1,4 +1,5 @@
 import * as nodeAssert from 'node:assert/strict';
+import Failure from './Failure.js';
 
 const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to be string: ${str}`);
 const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
@@ -6,7 +7,7 @@ const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expect
 const assertRelations = (definitions, collectErrors = false) => {
 	nodeAssert.ok(definitions && typeof definitions, 'object');
 
-	const errors = new Map();
+	const failures = new Map();
 	const assert = {};
 	const defineAssert = (method) => {
 		if (collectErrors) {
@@ -14,8 +15,9 @@ const assertRelations = (definitions, collectErrors = false) => {
 				try {
 					return nodeAssert[method](...args);
 				} catch (err) {
-					// deduplicating all the "duplicate X" errors
-					errors.set(err.message, err);
+					// deduplicating all the "duplicate X" failures
+					const failure = new Failure({ message: err.message });
+					failures.set(failure.message, failure);
 				}
 			};
 		}
@@ -137,10 +139,8 @@ const assertRelations = (definitions, collectErrors = false) => {
 		}
 	}
 
-	if (errors.size) {
-		const error = new Error('Errors validating relations in definitions');
-		error.failures = () => [...errors.values()];
-		return [error, definitions];
+	if (failures.size) {
+		return [...failures.values()];
 	}
 
 	return [null, definitions];

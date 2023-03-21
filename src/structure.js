@@ -132,7 +132,8 @@ export const validatePart = (part, partialObj) => {
 };
 
 export const validateRootStructure = (obj) => {
-	return validateStructure(obj, root);
+	const [error] = validateStructure(obj, root);
+	return error;
 };
 
 function getListFromEnv(envVar, sep = ',') {
