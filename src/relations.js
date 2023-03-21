@@ -96,26 +96,31 @@ const assertRelations = (definitions, collectErrors = false) => {
 		const to = maps[binding.destination_type].get(binding.destination, vhost);
 		assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
 
-		let args = undefined;
-		if (from.type === 'headers') {
-			// TODO: TEST THIS
-			assert.equal(binding.routing_key, '', `Routing key is ignored for header exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-			args = binding.arguments;
-		} else if (from.type === 'topic') {
-			// TODO: TEST THIS
-			assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for topic exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-			args = binding.routing_key;
-		} else if (from.type === 'direct') {
-			// TODO: TEST THIS
-			assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for direct exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-			args = binding.routing_key;
-		} else {
-			assert.fail(`Unexpected binding type: ${from.type}`);
+		if (from) {
+			let args = undefined;
+			if (from.type === 'headers') {
+				// TODO: TEST THIS
+				assert.equal(binding.routing_key, '', `Routing key is ignored for header exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+				args = binding.arguments;
+			} else if (from.type === 'topic') {
+				// TODO: TEST THIS
+				assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for topic exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+				args = binding.routing_key;
+			} else if (from.type === 'direct') {
+				// TODO: TEST THIS
+				assert.equal(binding.arguments['x-match'], undefined, `Match arguments are ignored for direct exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+				args = binding.routing_key;
+			} else {
+				assert.fail(`Unexpected binding type: ${from.type}`);
+			}
+
+			if (to) {
+				// JSON.stringify is not a good index here and easily tricked, but good enough for now
+				// TODO: replace for a spable serializer in the future
+				assert.ok(!maps.binding.get(from, to, args), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
+				maps.binding.set(from, to, args, binding);
+			}
 		}
-		// JSON.stringify is not a good index here and easily tricked, but good enough for now
-		// TODO: replace for a spable serializer in the future
-		assert.ok(!maps.binding.get(from, to, args), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
-		maps.binding.set(from, to, args, binding);
 	}
 
 	// testing whether queue is used anywhere
