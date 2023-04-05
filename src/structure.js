@@ -87,6 +87,10 @@ const rootStructure = {
 		auto_delete: boolean(),
 		arguments: optional(object({
 			'x-queue-type': optional(string()),
+			'x-message-ttl': optional(number()),
+			'x-expires': optional(number()),
+			'x-dead-letter-exchange': optional(string()),
+			'x-dead-letter-routing-key': optional(string()),
 		})),
 	})),
 	exchanges: array(object(
@@ -97,7 +101,9 @@ const rootStructure = {
 			durable: boolean(),
 			auto_delete: boolean(),
 			internal: optional(boolean()),
-			arguments: optional(object({})),
+			arguments: optional(object({
+				'alternate-exchange': optional(string()),
+			})),
 		},
 	)),
 	bindings: array(object({
