@@ -5,6 +5,10 @@ const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to b
 const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
 
 const assertRelations = (definitions, collectErrors = false) => {
+	console.log('Total nr of vhosts:', definitions.vhosts.length);
+	console.log('Total nr of exchanges:', definitions.exchanges.length);
+	console.log('Total nr of queues:', definitions.queues.length);
+	console.log('Total nr of users:', definitions.users.length, '(not analyzed further)');
 	nodeAssert.ok(definitions && typeof definitions, 'object');
 
 	const failures = new Map();
@@ -175,7 +179,7 @@ const assertRelations = (definitions, collectErrors = false) => {
 	for (const queue of definitions.queues) {
 		if (!db.bindingByDestination.get(queue)) {
 			if (queue.name && queue.vhost) {
-				console.warn(`Unused queue: "${queue.name}" in vhost "${queue.vhost}"`);
+				console.warn(`Unbound queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			}
 		}
 	}
@@ -184,7 +188,7 @@ const assertRelations = (definitions, collectErrors = false) => {
 	for (const exchange of definitions.exchanges) {
 		if (!db.binding.get(exchange) && !db.bindingByDestination.get(exchange)) {
 			if (exchange.name && exchange.vhost) {
-				console.warn(`Unused exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+				console.warn(`Unbound exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			}
 		}
 	}
