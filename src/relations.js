@@ -28,28 +28,58 @@ const assertRelations = (definitions, collectErrors = false) => {
 	defineAssert('equal');
 
 	const db = {
+		// queues: vhost.name -> Q
 		queue: new Map(),
+		// exchanges: vhost.name -> EX
 		exchange: new Map(),
+		// vhosts: vhost.name -> vhost
 		vhost: new Map(),
+		// EX/Q: vhost.name -> EX/Q
+		resourceByVhost: new Map(),
+		// bindings: source -> destination -> args
 		binding: new Map(),
+		// bindings: destination -> [source]
 		bindingByDestination: new Map(),
+	};
+
+	const pushToMapOfArrays = (map, key, item) => {
+		let array = map.get(key);
+		if (!array) {
+			map.set(key, [item]);
+		} else {
+			array.push(item);
+		}
 	};
 
 	const maps = {
 		vhost: {
 			get(name) { return db.vhost.get(name); },
+			has(name) { return db.vhost.has(name); },
+			delete(name) { return db.vhost.delete(name); },
 			set(name, item) { return db.vhost.set(name, item); },
 		},
 		queue: {
 			get(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.get([name, vhost].join(' @ ')); },
-			set(name, vhost, item) { return db.queue.set([name, vhost].join(' @ '), item); },
+			has(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.has([name, vhost].join(' @ ')); },
+			delete(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.delete([name, vhost].join(' @ ')); },
+			set(name, vhost, item) {
+				pushToMapOfArrays(db.resourceByVhost, vhost, item);
+				return db.queue.set([name, vhost].join(' @ '), item);
+			},
 		},
 		exchange: {
 			get(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.get([name, vhost].join(' @ ')); },
-			set(name, vhost, item) { return db.exchange.set([name, vhost].join(' @ '), item); },
+			has(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.has([name, vhost].join(' @ ')); },
+			delete(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.delete([name, vhost].join(' @ ')); },
+			set(name, vhost, item) {
+				pushToMapOfArrays(db.resourceByVhost, vhost, item);
+				return db.exchange.set([name, vhost].join(' @ '), item);
+			},
 		},
 		binding: {
-			get(from, to, args) { assertObj(from); assertObj(to); return db.binding.get(from)?.get(to)?.get(args) ?? undefined; },
+			get(from, to, args) { assertObj(from); assertObj(to); return db.binding.get(from)?.get(to)?.get(args) ?? false; },
+			has(from, to, args) { assertObj(from); assertObj(to); return db.binding.get(from)?.get(to)?.get(args) ?? false; },
+			delete(from, to, args) { assertObj(from); assertObj(to); return db.binding.get(from)?.get(to)?.delete(args); },
 			set(from, to, args, item) {
 				assertObj(from);
 				assertObj(to);
@@ -64,12 +94,7 @@ const assertRelations = (definitions, collectErrors = false) => {
 					toMap = new Map();
 					fromMap.set(to, toMap);
 				}
-				let byDestination = db.bindingByDestination.get(to);
-				if (!byDestination) {
-					db.bindingByDestination.set(to, [item]);
-				} else {
-					byDestination.push(item);
-				}
+				pushToMapOfArrays(db.bindingByDestination, to, item);
 				return toMap.set(args, item);
 			},
 		},
@@ -137,16 +162,25 @@ const assertRelations = (definitions, collectErrors = false) => {
 		}
 	}
 
-	// testing whether queue is used anywhere
+	// test whether vhost is used anywhere
+	for (const vhost of definitions.vhosts) {
+		if (!db.resourceByVhost.get(vhost.name)) {
+			if (vhost.name) {
+				console.warn(`Unused vhost: "${vhost.name}"`);
+			}
+		}
+	}
+
+	// test whether queue is used anywhere: ? -> Q
 	for (const queue of definitions.queues) {
-		if (!db.binding.get(queue) && !db.bindingByDestination.get(queue)) {
+		if (!db.bindingByDestination.get(queue)) {
 			if (queue.name && queue.vhost) {
 				console.warn(`Unused queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			}
 		}
 	}
 
-	// testing whether exchange is used anywhere
+	// test whether exchange is used anywhere: EX -> ? or ? -> EX
 	for (const exchange of definitions.exchanges) {
 		if (!db.binding.get(exchange) && !db.bindingByDestination.get(exchange)) {
 			if (exchange.name && exchange.vhost) {
