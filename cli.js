@@ -4,8 +4,16 @@ import path from 'node:path';
 import { strict as assert } from 'assert';
 import validate from './src/validate.js';
 
-const [,,filePath] = process.argv;
+const [,, filePath, usageFilePath] = process.argv;
+
+if (!filePath) {
+	console.error('usage: rabbit-validator <path/definitions.json> [<path/usage.json>]');
+	console.error('       usage.json is a fail containing array of objects { vhost, exchange, queue } of used RabbitMQ resources.');
+	process.exit(1);
+}
+
 const fullFilePath = path.resolve(filePath);
+const fullUsageFilePath = usageFilePath && path.resolve(usageFilePath);
 
 const logFailures = (failures) => {
 	assert.equal(Array.isArray(failures), true, `Invalid list of failures: ${failures}`);
@@ -19,10 +27,10 @@ const logFailures = (failures) => {
 	);
 };
 
-console.debug(`Validating a definitions file at ${fullFilePath}`);
+console.debug(`Validating a definitions file at ${fullFilePath}${fullUsageFilePath ? ' with usage stats from ' + fullUsageFilePath : ''}`);
 
 // Failure[]
-const failures = validate(fullFilePath);
+const failures = validate(fullFilePath, fullUsageFilePath);
 if (failures.length) {
 	logFailures(failures);
 	process.exit(1);
