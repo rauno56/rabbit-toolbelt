@@ -1,6 +1,7 @@
 import * as nodeAssert from 'node:assert/strict';
 
 import Failure from './Failure.js';
+import failureCollector from './failureCollector.js';
 
 const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to be string: ${str}`);
 const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
@@ -89,25 +90,7 @@ class Index {
 	build(definitions, collectErrors = false) {
 		nodeAssert.ok(definitions && typeof definitions, 'object');
 
-		const failures = new Map();
-		const assert = {};
-		const defineAssert = (method) => {
-			if (collectErrors) {
-				return assert[method] = (...args) => {
-					try {
-						return nodeAssert[method](...args);
-					} catch (err) {
-						// deduplicating all the "duplicate X" failures
-						const failure = new Failure({ message: err.message });
-						failures.set(failure.message, failure);
-					}
-				};
-			}
-			return assert[method] = nodeAssert[method];
-		};
-		defineAssert('ok');
-		defineAssert('fail');
-		defineAssert('equal');
+		const assert = failureCollector(!collectErrors);
 
 		for (const vhost of definitions.vhosts) {
 			if (!vhost.name) {
@@ -169,7 +152,7 @@ class Index {
 			}
 		}
 
-		return [...failures.values()];
+		return assert.collectFailures();
 	}
 }
 
