@@ -1,6 +1,5 @@
 import * as nodeAssert from 'node:assert/strict';
 
-import Failure from './Failure.js';
 import failureCollector from './failureCollector.js';
 
 const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to be string: ${str}`);
@@ -87,10 +86,10 @@ class Index {
 		this.db = db;
 	}
 
-	build(definitions, collectErrors = false) {
+	build(definitions, throwOnFirstError = true) {
 		nodeAssert.ok(definitions && typeof definitions, 'object');
 
-		const assert = failureCollector(!collectErrors);
+		const assert = failureCollector(throwOnFirstError);
 
 		for (const vhost of definitions.vhosts) {
 			if (!vhost.name) {

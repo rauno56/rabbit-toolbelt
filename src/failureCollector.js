@@ -1,7 +1,7 @@
 import * as nodeAssert from 'node:assert/strict';
 import Failure from './Failure.js';
 
-export default (throwOnFirst = false) => {
+export default (throwOnFirstError = false) => {
 	const failures = new Map();
 	const assert = {
 		collectFailures: () => {
@@ -9,7 +9,7 @@ export default (throwOnFirst = false) => {
 		},
 	};
 	const defineAssert = (method) => {
-		if (throwOnFirst) {
+		if (throwOnFirstError) {
 			assert[method] = nodeAssert[method];
 		}
 		return assert[method] = (...args) => {

@@ -2,11 +2,11 @@ import * as nodeAssert from 'node:assert/strict';
 
 import Index from './Index.js';
 
-const assertRelations = (definitions, collectErrors = false) => {
+const assertRelations = (definitions, throwOnFirstError = true) => {
 	nodeAssert.ok(definitions && typeof definitions, 'object');
 
 	const index = new Index();
-	const failures = index.build(definitions, collectErrors);
+	const failures = index.build(definitions, throwOnFirstError);
 
 	// test whether vhost is used anywhere
 	for (const vhost of definitions.vhosts) {
@@ -38,6 +38,6 @@ const assertRelations = (definitions, collectErrors = false) => {
 	return failures;
 };
 
-export const validateRelations = (def) => assertRelations(def, true);
+export const validateRelations = (def) => assertRelations(def, false);
 
 export default assertRelations;
