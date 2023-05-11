@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Validator for the definition files of RabbitMQ",
-  "main": "validate.js",
+  "main": "src/validate.js",
   "bin": "cli.js",
   "scripts": {
     "lint": "eslint .",
