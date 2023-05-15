@@ -17,6 +17,9 @@
   "vhosts": [
     {
       "name": "/"
+    },
+    {
+      "name": "isolated"
     }
   ],
   "permissions": [
