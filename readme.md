@@ -3,7 +3,17 @@
 Script to do basic validation on `definitions.json` file for RabbitMQ for GitOps:
 
 - validates the shape of the json,
-- asserts all the names only to contain "normal" printable characters: `a-z0-9:_./\-*#`.
+- asserts all the names only to contain ASCII printable characters: `a-z0-9:_./\-*#`,
+- when second path argument is provided, also checks usage against a fixed list.
+
+## `usage.json`
+
+`usage.json` should contain json array of following objects:
+
+- `{ vhost: string, queue: string }` if the entry represents interacting with queue directly or
+- `{ vhost: string, exchange: string, queue: string }` if the entry represents interacting with queue through an exchange.
+
+Such statistics can be fetch from Prometheus API for example.
 
 ## Usage
 
@@ -11,7 +21,7 @@ Script to do basic validation on `definitions.json` file for RabbitMQ for GitOps
 
 ```bash
 # Install from npm and run
-npx rabbit-validator [path/to/definitions.json]
+npx rabbit-validator <path/definitions.json> [<path/usage.json>]
 ```
 
 #### Run from npm
@@ -19,9 +29,9 @@ npx rabbit-validator [path/to/definitions.json]
 ```bash
 npm i rabbit-validator # install locally
 
-npx rabbit-validator [path/to/definitions.json]
+npx rabbit-validator <path/definitions.json> [<path/usage.json>]
 # or to force npx offline:
-npx --offline rabbit-validator [path/to/definitions.json]
+npx --offline rabbit-validator <path/definitions.json> [<path/usage.json>]
 
 # --offline is not required if previously installed, but errors if
 # it isn't instead of downloading the package
@@ -32,7 +42,7 @@ npx --offline rabbit-validator [path/to/definitions.json]
 ```bash
 npm i --global rabbit-validator # install with "--global" flag puts it to path
 
-rabbit-validator [path/to/definitions.json]
+rabbit-validator <path/definitions.json> [<path/usage.json>]
 ```
 
 #### Run from the repo
@@ -40,7 +50,7 @@ rabbit-validator [path/to/definitions.json]
 ```bash
 git clone git@github.com:rauno56/rabbit-validator.git
 cd rabbit-validator
-npx . [path/to/definitions.json]
+npx . <path/definitions.json> [<path/usage.json>]
 ```
 
 ## Configuration
