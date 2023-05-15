@@ -16,10 +16,12 @@ const usage = [
 	{ vhost: 'isolated', queue: 'defect_queue', exchange: 'isolated_defect_headers' },
 ];
 
+const opts = true;
+
 describe('asserting usage', () => {
 	it('fn exists and takes an object and an array', () => {
 		const def = copy(valid);
-		assertUsage(def, usage);
+		assertUsage(def, usage, opts);
 		assert.throws(() => {
 			// should throw if missing arguments
 			assertUsage();
@@ -38,7 +40,7 @@ describe('asserting usage', () => {
 			});
 
 			assert.throws(() => {
-				assertUsage(def, usage);
+				assertUsage(def, usage, opts);
 			}, /unused_vhost/);
 		});
 
@@ -50,7 +52,7 @@ describe('asserting usage', () => {
 			});
 
 			assert.throws(() => {
-				assertUsage(def, usage);
+				assertUsage(def, usage, opts);
 			}, /unused_queue/);
 		});
 
@@ -62,7 +64,7 @@ describe('asserting usage', () => {
 			});
 
 			assert.throws(() => {
-				assertUsage(def, usage);
+				assertUsage(def, usage, opts);
 			}, /unused_exchange/);
 		});
 	});

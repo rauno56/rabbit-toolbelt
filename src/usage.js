@@ -8,11 +8,11 @@ const formatPercentage = (ratio) => {
 	return `${(100 * ratio).toFixed(1)}%`;
 };
 
-const assertUsage = (definitions, usageStats) => {
+const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	nodeAssert.ok(definitions && typeof definitions, 'object');
 	nodeAssert.ok(Array.isArray(usageStats), `Expected array as usage stats. Got: ${inspect(usageStats)}`);
 
-	const assert = failureCollector(false);
+	const assert = failureCollector(throwOnFirstError);
 	const index = new Index();
 	// collect failures but ignore issues for compiling usage failures
 	index.build(definitions, true);
