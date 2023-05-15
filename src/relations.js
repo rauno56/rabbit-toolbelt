@@ -1,10 +1,19 @@
 import * as nodeAssert from 'node:assert/strict';
 
 import Index from './Index.js';
+import failureCollector from './failureCollector.js';
+
+const formatResource = (resource) => {
+	if (resource.type) {
+		return `exchange "${resource.name}"`;
+	}
+	return `queue "${resource.name}"`;
+};
 
 const assertRelations = (definitions, throwOnFirstError = true) => {
 	nodeAssert.ok(definitions && typeof definitions, 'object');
 
+	const assert = failureCollector(throwOnFirstError);
 	const index = new Index();
 	const failures = index.build(definitions, throwOnFirstError);
 
@@ -35,7 +44,9 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 		}
 	}
 
-	// TODO: fail if binding references a missing queue or an exchange
+	for (const [vhost, res] of index.db.resourceByVhost.entries()) {
+		assert.ok(index.maps.vhost.get(vhost), `Missing vhost "${vhost}" used by ${formatResource(res[0])}`);
+	}
 	// TODO: fail if anything references a missing vhost
 
 	return failures;

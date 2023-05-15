@@ -19,6 +19,17 @@ describe('asserting relations', () => {
 		});
 	});
 
+	describe('missing', () => {
+		it('vhost', () => {
+			const def = copy(valid);
+			def.vhosts.pop();
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /missing.*vhost/i);
+		});
+	});
+
 	describe('duplicates', () => {
 		it('vhosts', () => {
 			const def = copy(valid);
@@ -31,9 +42,10 @@ describe('asserting relations', () => {
 
 		it('queues', () => {
 			const def = copy(valid);
-			const newQueue = copy(def.queues[0]);
-			newQueue.vhost = 'empty_vhost';
-			def.queues.push(newQueue);
+			def.vhosts.push({ name: 'empty_vhost' });
+			const newResource = copy(def.queues[0]);
+			newResource.vhost = 'empty_vhost';
+			def.queues.push(newResource);
 
 			// should pass because of the different vhost
 			assertRelations(def);
@@ -47,9 +59,10 @@ describe('asserting relations', () => {
 
 		it('exchanges', () => {
 			const def = copy(valid);
-			const newQueue = copy(def.exchanges[0]);
-			newQueue.vhost = 'empty_vhost';
-			def.exchanges.push(newQueue);
+			def.vhosts.push({ name: 'empty_vhost' });
+			const newResource = copy(def.exchanges[0]);
+			newResource.vhost = 'empty_vhost';
+			def.exchanges.push(newResource);
 
 			// should pass because of the different vhost
 			assertRelations(def);
