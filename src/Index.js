@@ -2,7 +2,7 @@ import * as nodeAssert from 'node:assert/strict';
 
 import failureCollector from './failureCollector.js';
 
-const assertStr = (str) => nodeAssert.equal(typeof str, 'string', `Expected to be string: ${str}`);
+const assertStr = (str, key) => nodeAssert.equal(typeof str, 'string', `Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`);
 const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
 
 const pushToMapOfArrays = (map, key, item) => {
@@ -41,18 +41,18 @@ class Index {
 				set(name, item) { return db.vhost.set(name, item); },
 			},
 			queue: {
-				get(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.get([name, vhost].join(' @ ')); },
-				has(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.has([name, vhost].join(' @ ')); },
-				delete(name, vhost) { assertStr(name); assertStr(vhost); return db.queue.delete([name, vhost].join(' @ ')); },
+				get(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.queue.get([name, vhost].join(' @ ')); },
+				has(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.queue.has([name, vhost].join(' @ ')); },
+				delete(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.queue.delete([name, vhost].join(' @ ')); },
 				set(name, vhost, item) {
 					pushToMapOfArrays(db.resourceByVhost, vhost, item);
 					return db.queue.set([name, vhost].join(' @ '), item);
 				},
 			},
 			exchange: {
-				get(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.get([name, vhost].join(' @ ')); },
-				has(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.has([name, vhost].join(' @ ')); },
-				delete(name, vhost) { assertStr(name); assertStr(vhost); return db.exchange.delete([name, vhost].join(' @ ')); },
+				get(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.exchange.get([name, vhost].join(' @ ')); },
+				has(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.exchange.has([name, vhost].join(' @ ')); },
+				delete(name, vhost) { assertStr(name, 'name'); assertStr(vhost, 'vhost'); return db.exchange.delete([name, vhost].join(' @ ')); },
 				set(name, vhost, item) {
 					pushToMapOfArrays(db.resourceByVhost, vhost, item);
 					return db.exchange.set([name, vhost].join(' @ '), item);

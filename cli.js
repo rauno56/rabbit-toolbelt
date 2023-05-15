@@ -8,7 +8,7 @@ const [,, filePath, usageFilePath] = process.argv;
 
 if (!filePath) {
 	console.error('usage: rabbit-validator <path/definitions.json> [<path/usage.json>]');
-	console.error('       usage.json is a fail containing array of objects { vhost, exchange, queue } of used RabbitMQ resources.');
+	console.error('       usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
 	process.exit(1);
 }
 
