@@ -13,6 +13,8 @@ Script to do basic validation on `definitions.json` file for RabbitMQ for GitOps
 - `{ vhost: string, queue: string }` if the entry represents interacting with queue directly or
 - `{ vhost: string, exchange: string, queue: string }` if the entry represents interacting with queue through an exchange.
 
+Such statistics can be fetch from Prometheus API for example.
+
 ## Usage
 
 #### Quick run
