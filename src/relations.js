@@ -35,6 +35,9 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 		}
 	}
 
+	// TODO: fail if binding references a missing queue or an exchange
+	// TODO: fail if anything references a missing vhost
+
 	return failures;
 };
 
