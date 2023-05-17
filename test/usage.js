@@ -10,7 +10,7 @@ const copy = (obj) => {
 
 const valid = readJSONSync('./fixtures/full.json');
 const usage = [
-	{ vhost: '/', queue: 'defect_queue', exchange: 'anotherex2' },
+	{ vhost: '/', queue: 'defect_queue', exchange: 'defect_direct' },
 	{ vhost: '/', queue: 'defect_queue', exchange: 'defect_topic' },
 	{ vhost: '/', queue: 'defect_queue', exchange: 'defect_headers' },
 	{ vhost: 'isolated', queue: 'defect_queue', exchange: 'isolated_defect_headers' },

@@ -30,6 +30,40 @@ describe('asserting relations', () => {
 		});
 	});
 
+	describe('excessive configuration on bindings', () => {
+		it('from header exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Routing key is ignored for header exchanges/i);
+		});
+
+		it('from topic exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+			def.bindings[0].source = 'defect_topic';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Match arguments are ignored for topic exchanges,/i);
+		});
+
+		it('from direct exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+			def.bindings[0].source = 'defect_direct';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Match arguments are ignored for direct exchanges,/i);
+		});
+	});
+
 	describe('duplicates', () => {
 		it('vhosts', () => {
 			const def = copy(valid);
