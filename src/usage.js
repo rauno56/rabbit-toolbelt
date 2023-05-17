@@ -15,7 +15,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const assert = failureCollector(throwOnFirstError);
 	const index = new Index();
 	// collect failures but ignore issues for compiling usage failures
-	index.build(definitions, true);
+	index.build(definitions, false);
 
 	// Check resources that are used, but missing from definitions
 	// Likely to be temporary resources.
