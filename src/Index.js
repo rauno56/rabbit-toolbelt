@@ -130,7 +130,7 @@ class Index {
 				let args = undefined;
 				if (from.type === 'headers') {
 					// TODO: TEST THIS
-					assert.equal(binding.routing_key, '', `Routing key is ignored for header exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					assert.ok(!binding.routing_key, `Routing key is ignored for header exchanges, but set("${binding.routing_key}") for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
 					args = binding.arguments;
 				} else if (from.type === 'topic') {
 					// TODO: TEST THIS
