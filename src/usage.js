@@ -57,7 +57,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const vhostUnused = [...index.db.vhost.values()];
 	if (vhostSizeBefore > 1 && vhostUnused.length) {
 		for (const i of vhostUnused) {
-			assert.fail(`Empirically unused vhost: ${i.name}`);
+			console.warn(`Warning: Empirically unused vhost "${i.name}"`);
 		}
 		const vhostRatio = vhostUnused.length / vhostSizeBefore;
 		assert.ok(vhostRatio < 0.3, `High ratio of unused vhost resources: ${formatPercentage(vhostRatio)}`);
@@ -66,7 +66,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const exchangeUnused = [...index.db.exchange.values()];
 	if (exchangeSizeBefore && exchangeUnused.length) {
 		for (const i of exchangeUnused) {
-			assert.fail(`Empirically unused exchange: "${i.name}" in "${i.vhost}"`);
+			console.warn(`Warning: Empirically unused exchange "${i.name}" in "${i.vhost}"`);
 		}
 		const exchangeRatio = exchangeUnused.length / exchangeSizeBefore;
 		assert.ok(exchangeRatio < 0.3, `High ratio of unused exchange resources: ${formatPercentage(exchangeRatio)}`);
@@ -75,7 +75,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const queueUnused = [...index.db.queue.values()];
 	if (queueSizeBefore && queueUnused.length) {
 		for (const i of queueUnused) {
-			assert.fail(`Empirically unused queue: "${i.name}" in "${i.vhost}"`);
+			console.warn(`Warning: Empirically unused queue "${i.name}" in "${i.vhost}"`);
 		}
 		const queueRatio = queueUnused.length / queueSizeBefore;
 		assert.ok(queueRatio < 0.3, `High ratio of unused queue resources: ${formatPercentage(queueRatio)}`);
