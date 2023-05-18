@@ -38,10 +38,16 @@ describe('asserting usage', () => {
 			def.vhosts.push({
 				name: 'unused_vhost',
 			});
+			def.vhosts.push({
+				name: 'unused_vhost2',
+			});
+			def.vhosts.push({
+				name: 'unused_vhost3',
+			});
 
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
-			}, /unused_vhost/);
+			}, /High ratio of unused vhost/);
 		});
 
 		it('queues', () => {
@@ -53,7 +59,7 @@ describe('asserting usage', () => {
 
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
-			}, /unused_queue/);
+			}, /High ratio of unused queue/);
 		});
 
 		it('exchanges', () => {
@@ -62,10 +68,18 @@ describe('asserting usage', () => {
 				vhost: '/',
 				name: 'unused_exchange',
 			});
+			def.exchanges.push({
+				vhost: '/',
+				name: 'unused_exchange2',
+			});
+			def.exchanges.push({
+				vhost: '/',
+				name: 'unused_exchange3',
+			});
 
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
-			}, /unused_exchange/);
+			}, /High ratio of unused exchange/);
 		});
 	});
 });
