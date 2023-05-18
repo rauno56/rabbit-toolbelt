@@ -1,12 +1,20 @@
 #!/usr/bin/env sh
 
-node cli.js fixtures/empty.json || exit 1
-node cli.js fixtures/empty.json fixtures/usage.empty.json || exit 1
+assert_succeeds () {
+	(node cli.js $@) || exit 1
+	echo
+}
 
-node cli.js fixtures/full.json || exit 1
-node cli.js fixtures/full.json fixtures/usage.full.json || exit 1
+assert_fails () {
+	! (node cli.js $@) && echo "Expected failure: OK" || exit 1
+	echo
+}
 
-! node cli.js fixtures/full.json fixtures/usage.empty.json && echo "Expected failure: OK" || exit 1
+assert_succeeds fixtures/empty.json
+assert_succeeds fixtures/empty.json fixtures/usage.empty.json
+assert_succeeds fixtures/full.json
+assert_succeeds fixtures/full.json fixtures/usage.full.json
 
-! node cli.js fixtures/full-invalid.json && echo "Expected failure: OK" || exit 1
-! node cli.js fixtures/full-invalid-relations.json && echo "Expected failure: OK" || exit 1
+assert_fails fixtures/full.json fixtures/usage.empty.json
+assert_fails fixtures/full-invalid.json
+assert_fails fixtures/full-invalid-relations.json

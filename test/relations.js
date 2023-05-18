@@ -19,6 +19,51 @@ describe('asserting relations', () => {
 		});
 	});
 
+	describe('missing', () => {
+		it('vhost', () => {
+			const def = copy(valid);
+			def.vhosts.pop();
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /missing.*vhost/i);
+		});
+	});
+
+	describe('excessive configuration on bindings', () => {
+		it('from header exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Routing key is ignored for header exchanges/i);
+		});
+
+		it('from topic exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+			def.bindings[0].source = 'defect_topic';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Match arguments are ignored for topic exchanges,/i);
+		});
+
+		it('from direct exchange', () => {
+			const def = copy(valid);
+			def.bindings[0].routing_key = '#';
+			def.bindings[0].arguments['x-match'] = 'all';
+			def.bindings[0].source = 'defect_direct';
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /Match arguments are ignored for direct exchanges,/i);
+		});
+	});
+
 	describe('duplicates', () => {
 		it('vhosts', () => {
 			const def = copy(valid);
@@ -31,9 +76,10 @@ describe('asserting relations', () => {
 
 		it('queues', () => {
 			const def = copy(valid);
-			const newQueue = copy(def.queues[0]);
-			newQueue.vhost = 'empty_vhost';
-			def.queues.push(newQueue);
+			def.vhosts.push({ name: 'empty_vhost' });
+			const newResource = copy(def.queues[0]);
+			newResource.vhost = 'empty_vhost';
+			def.queues.push(newResource);
 
 			// should pass because of the different vhost
 			assertRelations(def);
@@ -47,9 +93,10 @@ describe('asserting relations', () => {
 
 		it('exchanges', () => {
 			const def = copy(valid);
-			const newQueue = copy(def.exchanges[0]);
-			newQueue.vhost = 'empty_vhost';
-			def.exchanges.push(newQueue);
+			def.vhosts.push({ name: 'empty_vhost' });
+			const newResource = copy(def.exchanges[0]);
+			newResource.vhost = 'empty_vhost';
+			def.exchanges.push(newResource);
 
 			// should pass because of the different vhost
 			assertRelations(def);

@@ -4,6 +4,7 @@ import {
 	assert as assertStructure,
 	boolean,
 	enums,
+	nullable,
 	number,
 	object,
 	optional,
@@ -111,7 +112,7 @@ const rootStructure = {
 		vhost: string(),
 		destination: string(),
 		destination_type: string(),
-		routing_key: string(),
+		routing_key: nullable(string()),
 		arguments: optional(object()),
 	})),
 };

@@ -25,6 +25,9 @@ const logFailures = (failures) => {
 			return failure.message;
 		}).join('\n'),
 	);
+	if (failures.length) {
+		console.error('Total nr of failures:', failures.length);
+	}
 };
 
 console.debug(`Validating a definitions file at ${fullFilePath}${fullUsageFilePath ? ' with usage stats from ' + fullUsageFilePath : ''}`);

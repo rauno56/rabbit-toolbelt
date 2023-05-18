@@ -17,6 +17,9 @@
   "vhosts": [
     {
       "name": "/"
+    },
+    {
+      "name": "isolated"
     }
   ],
   "permissions": [
@@ -55,9 +58,9 @@
   ],
   "exchanges": [
     {
-      "name": "anotherex2",
+      "name": "defect_direct",
       "vhost": "/",
-      "type": "topic",
+      "type": "direct",
       "durable": true,
       "auto_delete": false,
       "internal": false,
@@ -93,6 +96,16 @@
   ],
   "bindings": [
     {
+      "source": "defect_headers",
+      "vhost": "/",
+      "destination": "defect_queue",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {
+        "x-match": "any"
+      }
+    },
+    {
       "source": "isolated_defect_headers",
       "vhost": "isolated",
       "destination": "defect_queue",
@@ -111,16 +124,6 @@
       "arguments": {
         "x-match": "any",
         "header1": "value1"
-      }
-    },
-    {
-      "source": "defect_headers",
-      "vhost": "/",
-      "destination": "defect_queue",
-      "destination_type": "queue",
-      "routing_key": "",
-      "arguments": {
-        "x-match": "any"
       }
     }
   ]
