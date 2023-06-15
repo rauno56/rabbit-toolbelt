@@ -1,6 +1,7 @@
 import { inspect } from 'util';
 import * as nodeAssert from 'node:assert/strict';
 
+import C from './config.js';
 import Index from './Index.js';
 import failureCollector from './failureCollector.js';
 
@@ -59,7 +60,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 			console.warn(`Warning: Empirically unused vhost "${i.name}"`);
 		}
 		const vhostRatio = vhostUnused.length / vhostSizeBefore;
-		assert.ok(vhostRatio < 0.3, `High ratio of unused vhosts: ${formatPercentage(vhostRatio)}`);
+		assert.ok(vhostRatio < C.unusedFailureThreshold.vhost, `High ratio of unused vhosts: ${formatPercentage(vhostRatio)}`);
 	}
 
 	const exchangeUnused = index.exchange.all();
@@ -68,7 +69,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 			console.warn(`Warning: Empirically unused exchange "${i.name}" in "${i.vhost}"`);
 		}
 		const exchangeRatio = exchangeUnused.length / exchangeSizeBefore;
-		assert.ok(exchangeRatio < 0.3, `High ratio of unused exchanges: ${formatPercentage(exchangeRatio)}`);
+		assert.ok(exchangeRatio < C.unusedFailureThreshold.exchange, `High ratio of unused exchanges: ${formatPercentage(exchangeRatio)}`);
 	}
 
 	const queueUnused = index.queue.all();
@@ -77,7 +78,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 			console.warn(`Warning: Empirically unused queue "${i.name}" in "${i.vhost}"`);
 		}
 		const queueRatio = queueUnused.length / queueSizeBefore;
-		assert.ok(queueRatio < 0.3, `High ratio of unused queues: ${formatPercentage(queueRatio)}`);
+		assert.ok(queueRatio < C.unusedFailureThreshold.queue, `High ratio of unused queues: ${formatPercentage(queueRatio)}`);
 	}
 
 	return assert.collectFailures();

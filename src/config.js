@@ -9,6 +9,11 @@ function getListFromEnv(envVar, sep = ',') {
 		.split(sep);
 }
 
+/**
+ * @param {string} envVar
+ * @param {number} defaultValue
+ * @returns {number}
+ */
 function getFloatFromEnv(envVar, defaultValue) {
 	return parseFloat(process.env[envVar]) || defaultValue;
 }
