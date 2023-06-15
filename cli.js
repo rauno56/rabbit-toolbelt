@@ -30,17 +30,17 @@ const commands = {
 
 		const logFailures = (failures) => {
 			assert.equal(Array.isArray(failures), true, `Invalid list of failures: ${failures}`);
+			console.error('Failures:');
 			console.error(
 				failures.map((failure) => {
 					if (failure.path) {
 						return `At ${failure.path.join('.')}: ${failure.message}`;
 					}
 					return failure.message;
+				}).map((f, idx) => {
+					return `${idx + 1}. ${f}`;
 				}).join('\n'),
 			);
-			if (failures.length) {
-				console.error('Total nr of failures:', failures.length);
-			}
 		};
 
 		console.debug(`Validating a definitions file at ${fullFilePath}${fullUsageFilePath ? ' with usage stats from ' + fullUsageFilePath : ''}`);
