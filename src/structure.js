@@ -14,13 +14,13 @@ import {
 	validate as validateStructure,
 } from 'superstruct';
 
+import C from './config.js';
 import { readJSONSync } from './utils.js';
 
 const printableAsciiRegex = /^[a-z0-9": ,{}()\n[\]_./+\-*#%]+$/i;
 const validNormalStringRegex = /^[a-z0-9:_./\-*#]+$/i;
-const normalStringAllowList = getListFromEnv('RABVAL_STRING_ALLOW', ',');
 const normalString = () => refine(string(), 'normal string', (value) => {
-	if (validNormalStringRegex.test(value) || normalStringAllowList.includes(value)) {
+	if (validNormalStringRegex.test(value) || C.normalStringAllowList.includes(value)) {
 		return true;
 	}
 
@@ -142,14 +142,5 @@ export const validateRootStructure = (obj) => {
 	const [error] = validateStructure(obj, root);
 	return error;
 };
-
-function getListFromEnv(envVar, sep = ',') {
-	assert(typeof envVar, 'string');
-	if (!process.env[envVar]) {
-		return [];
-	}
-	return process.env[envVar]
-		.split(sep);
-}
 
 export default assertRootStructure;
