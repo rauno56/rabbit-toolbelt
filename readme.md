@@ -58,3 +58,6 @@ npx . <path/definitions.json> [<path/usage.json>]
 The utility is configured via environment variables:
 
 - `RABVAL_STRING_ALLOW`: a comma-separated list of names to allow through the name validation regardless of their value.
+- `RABVAL_UNUSED_FAIL_THRESHOLD_VHOST`: Threshold for unused **vhost** ratio for failing the run.
+- `RABVAL_UNUSED_FAIL_THRESHOLD_EXCHANGE`: Threshold for unused **exchange** ratio for failing the run.
+- `RABVAL_UNUSED_FAIL_THRESHOLD_QUEUE`: Threshold for unused **queue** ratio for failing the run.
