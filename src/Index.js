@@ -17,7 +17,18 @@ const pushToMapOfArrays = (map, key, item) => {
 // A quick index to be able to quickly see which resources we've seen without the need to iterate through all
 // of them every time.
 class Index {
+	static fromDefinitions(definitions, throwOnFirstError) {
+		const index = new Index();
+		index.build(definitions, throwOnFirstError);
+
+		return index;
+	}
+
 	constructor() {
+		this.init();
+	}
+
+	init() {
 		const db = {
 			// queues: vhost.name -> Q
 			queue: new Map(),
@@ -88,6 +99,7 @@ class Index {
 
 	build(definitions, throwOnFirstError = true) {
 		nodeAssert.ok(definitions && typeof definitions, 'object');
+		this.init();
 
 		const assert = failureCollector(throwOnFirstError);
 
