@@ -1,9 +1,7 @@
-import { inspect, isDeepStrictEqual } from 'util';
+import { isDeepStrictEqual } from 'util';
 
 import { assertRootStructure } from './structure.js';
 import Index, { key } from './Index.js';
-
-inspect.defaultOptions.depth++;
 
 const diffMapsConsuming = (before, after) => {
 	const added = [];
@@ -36,8 +34,8 @@ const diff = (beforeDef, afterDef) => {
 	assertRootStructure(beforeDef);
 	assertRootStructure(afterDef);
 
-	const before = Index.fromDefinitions(beforeDef);
-	const after = Index.fromDefinitions(afterDef);
+	const before = Index.fromDefinitions(beforeDef, false);
+	const after = Index.fromDefinitions(afterDef, false);
 
 	const added = { vhosts: [], queues: [], exchanges: [], bindings: [] };
 	const deleted = { vhosts: [], queues: [], exchanges: [], bindings: [] };
