@@ -13,9 +13,8 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	nodeAssert.ok(Array.isArray(usageStats), `Expected array as usage stats. Got: ${inspect(usageStats)}`);
 
 	const assert = failureCollector(throwOnFirstError);
-	const index = new Index();
 	// collect failures but ignore issues for compiling usage failures
-	index.build(definitions, false);
+	const index = Index.fromDefinitions(definitions, false);
 
 	// Check resources that are used, but missing from definitions
 	// Likely to be temporary resources.
