@@ -14,7 +14,7 @@ const pushToMapOfArrays = (map, key, item) => {
 	}
 };
 
-const key = {
+export const key = {
 	resource: (resource) => {
 		if (typeof resource.destination_type === 'string') {
 			return key.binding(resource);
@@ -37,7 +37,7 @@ const key = {
 	exchange: ({ name, vhost }) => `E[${name} @ ${vhost}]`,
 	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`,
 	args: (args) => {
-		return Object.entries(args).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
+		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
 	},
 };
 
@@ -82,13 +82,16 @@ class Index {
 			vhost: {
 				count() { return db.vhost.size; },
 				all() { return [...db.vhost.values()]; },
+				getByKey(key) { return db.vhost.get(key); },
 				get(name) { return db.vhost.get(name); },
 				delete(name) { return db.vhost.delete(name); },
+				remove(item) { return db.vhost.delete(key.vhost(item)); },
 				set(name, item) { return db.vhost.set(name, item); },
 			},
 			queue: {
 				count() { return db.queue.size; },
 				all() { return [...db.queue.values()]; },
+				getByKey(key) { return db.queue.get(key); },
 				get(name, vhost) {
 					assertStr(name, 'name');
 					assertStr(vhost, 'vhost');
@@ -99,6 +102,7 @@ class Index {
 					assertStr(vhost, 'vhost');
 					return db.queue.delete(key.queue({ name, vhost }));
 				},
+				remove(item) { return db.queue.delete(key.queue(item)); },
 				set(name, vhost, item) {
 					pushToMapOfArrays(db.resourceByVhost, vhost, item);
 					return db.queue.set(key.queue({ name, vhost }), item);
@@ -107,6 +111,7 @@ class Index {
 			exchange: {
 				count() { return db.exchange.size; },
 				all() { return [...db.exchange.values()]; },
+				getByKey(key) { return db.exchange.get(key); },
 				get(name, vhost) {
 					assertStr(name, 'name');
 					assertStr(vhost, 'vhost');
@@ -117,6 +122,7 @@ class Index {
 					assertStr(vhost, 'vhost');
 					return db.exchange.delete(key.exchange({ name, vhost }));
 				},
+				remove(item) { return db.exchange.delete(key.exchange(item)); },
 				set(name, vhost, item) {
 					pushToMapOfArrays(db.resourceByVhost, vhost, item);
 					return db.exchange.set(key.exchange({ name, vhost }), item);
@@ -124,10 +130,13 @@ class Index {
 			},
 			binding: {
 				count() { return db.binding.size; },
+				all() { return [...db.binding.values()]; },
+				getByKey(key) { return db.binding.get(key); },
 				get(binding) {
 					return db.binding.get(key.binding(binding));
 				},
 				delete(binding) { return db.binding.delete(key.binding(binding)); },
+				remove(item) { return db.binding.delete(key.binding(item)); },
 				set(binding) {
 					assertObj(binding);
 					const source = maps.exchange.get(binding.source, binding.vhost);
