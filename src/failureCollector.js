@@ -17,7 +17,7 @@ export default (throwOnFirstError = true) => {
 				return nodeAssert[method](...args);
 			} catch (err) {
 				// deduplicating all the "duplicate X" failures
-				const failure = new Failure({ message: err.message });
+				const failure = new Failure({ message: err.message, stack: err.stack });
 				failures.set(failure.message, failure);
 			}
 		};

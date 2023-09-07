@@ -47,7 +47,6 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 	for (const [vhost, res] of index.resource.byVhost.entries()) {
 		assert.ok(index.vhost.get(vhost), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
 	}
-	// TODO: fail if anything references a missing vhost
 
 	return failures;
 };

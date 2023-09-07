@@ -165,7 +165,7 @@ class Index {
 
 		for (const vhost of definitions.vhosts) {
 			if (!vhost.name) {
-				// will not report failure because it's probably already caught
+				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
 			assert.ok(!this.vhost.get(vhost.name), `Duplicate vhost: "${vhost.name}"`);
@@ -174,24 +174,27 @@ class Index {
 
 		for (const queue of definitions.queues) {
 			if (!queue.name || !queue.vhost) {
-				// will not report failure because it's probably already caught
+				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
+			assert.ok(this.vhost.get(queue.vhost), `Missing vhost: "${queue.vhost}"`);
 			assert.ok(!this.queue.get(queue.name, queue.vhost), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queue.set(queue.name, queue.vhost, queue);
 		}
 
 		for (const exchange of definitions.exchanges) {
 			if (!exchange.name || !exchange.vhost) {
-				// will not report failure because it's probably already caught
+				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
+			assert.ok(this.vhost.get(exchange.vhost), `Missing vhost: "${exchange.vhost}"`);
 			assert.ok(!this.exchange.get(exchange.name, exchange.vhost), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchange.set(exchange.name, exchange.vhost, exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
+			assert.ok(this.vhost.get(vhost), `Missing vhost: "${vhost}"`);
 			const from = this.exchange.get(binding.source, vhost);
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
