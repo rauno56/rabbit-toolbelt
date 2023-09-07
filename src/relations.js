@@ -19,7 +19,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether vhost is used anywhere
 	for (const vhost of definitions.vhosts) {
-		if (!index.db.resourceByVhost.get(vhost.name)) {
+		if (!index.resource.byVhost.get(vhost.name)) {
 			if (vhost.name) {
 				console.warn(`Warning: Unused vhost "${vhost.name}"`);
 			}
@@ -28,7 +28,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether queue is used anywhere: ? -> Q
 	for (const queue of definitions.queues) {
-		if (!index.db.bindingByDestination.get(queue)) {
+		if (!index.binding.byDestination(queue)) {
 			if (queue.name && queue.vhost) {
 				console.warn(`Warning: Unbound queue "${queue.name}" in vhost "${queue.vhost}"`);
 			}
@@ -37,15 +37,15 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether exchange is used anywhere: EX -> ? or ? -> EX
 	for (const exchange of definitions.exchanges) {
-		if (!index.db.binding.get(exchange) && !index.db.bindingByDestination.get(exchange)) {
+		if (!index.binding.bySource(exchange) && !index.binding.byDestination(exchange)) {
 			if (exchange.name && exchange.vhost) {
 				console.warn(`Warning: Unbound exchange "${exchange.name}" in vhost "${exchange.vhost}"`);
 			}
 		}
 	}
 
-	for (const [vhost, res] of index.db.resourceByVhost.entries()) {
-		assert.ok(index.maps.vhost.get(vhost), `Missing vhost "${vhost}" used by ${formatResource(res[0])}`);
+	for (const [vhost, res] of index.resource.byVhost.entries()) {
+		assert.ok(index.vhost.get(vhost), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
 	}
 	// TODO: fail if anything references a missing vhost
 
