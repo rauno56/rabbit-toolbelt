@@ -26,7 +26,14 @@ if (
 	console.error('Commands:');
 	console.error('\tvalidate <path/definitions.json> [<path/usage.json>] # Validates definition file');
 	console.error('\t         usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
-	console.error('\tdiff <path/definitions.before.json> <path/definitions.after.json> # Diffs two definition files');
+	console.error();
+	console.error('\tdiff <path/definitions.before.json> <path/definitions.after.json>');
+	console.error('\t         Diffs two definition files.');
+	console.error();
+	console.error('\tdeploy <user> <password> <base url for server> <path/definitions.to.deploy.json>');
+	console.error('\t         Connects to the server and deploys the state in provided definitions file.');
+	console.error('\t         Base url is root url for the server with the schema: http://dev.rabbitmq.com');
+	console.error('\t         User and password are require. Unauthenticated access is not supported.');
 	process.exit(1);
 }
 
@@ -89,18 +96,13 @@ const commands = {
 			)
 		);
 	},
-	deploy: (serverBaseUrl, user, password, definitions) => {
-		return deploy(serverBaseUrl, user, password, readJSONSync(definitions));
+	deploy: (user, password, serverBaseUrl, definitions) => {
+		return deploy(user, password, serverBaseUrl, readJSONSync(definitions));
 	},
 };
 
-if (subcommand === 'diff') {
-	// rabbit-validator diff <path/definitions.before.json> <path/definitions.after.json>
-	commands.diff(...args);
-} else if (subcommand === 'deploy') {
-	commands.deploy(...args);
-} else if (subcommand === 'validate') {
-	commands.validate(...args);
+if (typeof commands[subcommand] === 'function') {
+	commands[subcommand](...args);
 } else {
 	console.error('Running rabbit-validator without subcommand is deprecated');
 	commands.validate(subcommand, args[0]);
