@@ -6,14 +6,21 @@ import { inspect } from 'node:util';
 
 import validate from './src/validate.js';
 import diff from './src/diff.js';
-import { readJSONSync } from './src/utils.js';
+import deploy from './src/deploy.js';
+import { getOpt, readJSONSync } from './src/utils.js';
+
+const opts = {
+	json: getOpt('--json'),
+	h: getOpt('-h'),
+	help: getOpt('--help'),
+};
 
 const [,, subcommand, ...args] = process.argv;
 
 if (
 	!subcommand
-	|| process.argv.includes('--help')
-	|| process.argv.includes('-h')
+	|| opts.h
+	|| opts.help
 ) {
 	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
 	console.error('Commands:');
@@ -62,6 +69,11 @@ const commands = {
 		const after = path.resolve(afterInput);
 
 		const result = diff(readJSONSync(before), readJSONSync(after));
+
+		if (opts.json) {
+			return console.log(JSON.stringify(result));
+		}
+
 		inspect.defaultOptions.depth += 2;
 		console.log(
 			Object.fromEntries(
@@ -77,13 +89,18 @@ const commands = {
 			)
 		);
 	},
+	deploy: (serverBaseUrl, user, password, definitions) => {
+		return deploy(serverBaseUrl, user, password, readJSONSync(definitions));
+	},
 };
 
 if (subcommand === 'diff') {
 	// rabbit-validator diff <path/definitions.before.json> <path/definitions.after.json>
-	commands.diff(args[0], args[1]);
+	commands.diff(...args);
+} else if (subcommand === 'deploy') {
+	commands.deploy(...args);
 } else if (subcommand === 'validate') {
-	commands.validate(args[0], args[1]);
+	commands.validate(...args);
 } else {
 	console.error('Running rabbit-validator without subcommand is deprecated');
 	commands.validate(subcommand, args[0]);
