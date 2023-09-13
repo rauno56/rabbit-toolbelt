@@ -111,7 +111,7 @@ const rootStructure = {
 		source: string(),
 		vhost: string(),
 		destination: string(),
-		destination_type: string(),
+		destination_type: enums(['exchange', 'queue']),
 		routing_key: nullable(string()),
 		arguments: optional(object()),
 	})),

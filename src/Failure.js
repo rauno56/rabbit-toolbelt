@@ -6,6 +6,7 @@ export default class Failure {
 	explanation = null;
 	value = null;
 	key = null;
+	stack = null;
 
 	static arrayFromSuperstructError(error) {
 		if (error === undefined) {
@@ -20,11 +21,12 @@ export default class Failure {
 		return new Failure({ message, value, key, path, explanation });
 	}
 
-	constructor({ message, value, key, path, explanation }) {
+	constructor({ message, value, key, path, explanation, stack }) {
 		this.message = message;
-		this.value = value;
-		this.key = key;
-		this.path = path;
-		this.explanation = explanation;
+		if (value) { this.value = value; }
+		if (stack) { this.stack = stack; }
+		if (key) { this.key = key; }
+		if (path) { this.path = path; }
+		if (explanation) { this.explanation = explanation; }
 	}
 }
