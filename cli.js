@@ -10,7 +10,11 @@ import { readJSONSync } from './src/utils.js';
 
 const [,, subcommand, ...args] = process.argv;
 
-if (!subcommand) {
+if (
+	!subcommand
+	|| process.argv.includes('--help')
+	|| process.argv.includes('-h')
+) {
 	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
 	console.error('Commands:');
 	console.error('\tvalidate <path/definitions.json> [<path/usage.json>] # Validates definition file');
