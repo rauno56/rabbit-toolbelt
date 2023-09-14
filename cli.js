@@ -13,6 +13,7 @@ const opts = {
 	json: getOpt('--json'),
 	h: getOpt('-h'),
 	help: getOpt('--help'),
+	summary: getOpt('--summary'),
 };
 
 const [,, subcommand, ...args] = process.argv;
@@ -87,7 +88,13 @@ const commands = {
 				Object.entries(result)
 					.reduce((acc, [op, resources]) => {
 						const shaken = Object.entries(resources)
-							.filter(([, changes]) => changes.length);
+							.filter(([, changes]) => changes.length)
+							.map(([key, changes]) => {
+								if (opts.summary) {
+									return [key, changes.length];
+								}
+								return [key, changes];
+							});
 						if (shaken.length) {
 							acc.push([op, Object.fromEntries(shaken)]);
 						}
