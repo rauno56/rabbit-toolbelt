@@ -1,3 +1,4 @@
+import path from 'node:path';
 import url from 'node:url';
 import { readFileSync } from 'node:fs';
 
@@ -12,6 +13,13 @@ export const getOpt = (option) => {
 		return true;
 	}
 	return false;
+};
+
+export const pathResolve = (input) => {
+	if (URL.canParse(input)) {
+		return new URL(input);
+	}
+	return path.resolve(input);
 };
 
 export const parseUrl = (input) => {

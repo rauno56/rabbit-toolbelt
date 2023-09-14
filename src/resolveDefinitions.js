@@ -1,0 +1,17 @@
+import { readFile } from 'node:fs/promises';
+
+import {
+	pathResolve,
+} from './utils.js';
+import RabbitClient from './RabbitClient.js';
+
+export const resolveDefinitions = async (input) => {
+	const location = pathResolve(input);
+	if (location instanceof URL) {
+		const client = new RabbitClient(location);
+		return client.requestDefinitions();
+	}
+	return JSON.parse(await readFile(location, { encoding: 'utf8' }));
+};
+
+export default resolveDefinitions;
