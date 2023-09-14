@@ -33,7 +33,7 @@ if (
 	console.error('\t         Diffs two definition files or servers.');
 	console.error('\t         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error();
-	console.error('\tdeploy <base url for a management API> <path/definitions.to.deploy.json>');
+	console.error('\tdeploy <path/definitions.to.deploy.json> <base url for a management API>');
 	console.error('\t         Connects to a management API and deploys the state in provided definitions file.');
 	console.error('\t         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('\t         Protocol is required to be http or https.');
@@ -107,8 +107,8 @@ const commands = {
 			)
 		);
 	},
-	deploy: (serverBaseUrl, definitions) => {
-		return deploy(new URL(serverBaseUrl), readJSONSync(definitions));
+	deploy: (definitions, serverBaseUrl) => {
+		return deploy(readJSONSync(definitions), new URL(serverBaseUrl));
 	},
 };
 

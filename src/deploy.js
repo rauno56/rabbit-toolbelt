@@ -78,7 +78,7 @@ const diffServer = async (client, definitions) => {
 	return changes;
 };
 
-const deploy = async (serverBaseUrl, definitions) => {
+const deploy = async (definitions, serverBaseUrl) => {
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 
