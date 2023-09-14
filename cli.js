@@ -15,6 +15,8 @@ const opts = {
 	h: getOpt('-h'),
 	help: getOpt('--help'),
 	summary: getOpt('--summary'),
+	noDeletions: getOpt('--no-deletions'),
+	recreateChanged: getOpt(	'--recreate-changed'),
 };
 
 const [,, subcommand, ...args] = process.argv;
@@ -115,7 +117,17 @@ const commands = {
 		);
 	},
 	deploy: (definitions, serverBaseUrl) => {
-		return deploy(readJSONSync(definitions), new URL(serverBaseUrl));
+		const {
+			noDeletions,
+			recreateChanged,
+		} = opts;
+
+		return deploy(
+			readJSONSync(definitions),
+			new URL(serverBaseUrl), {
+				noDeletions,
+				recreateChanged,
+			});
 	},
 };
 
