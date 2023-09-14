@@ -86,7 +86,7 @@ const commands = {
 			return console.log(JSON.stringify(result));
 		}
 
-		inspect.defaultOptions.depth += 2;
+		inspect.defaultOptions.depth += 3;
 		console.log(
 			Object.fromEntries(
 				Object.entries(result)
