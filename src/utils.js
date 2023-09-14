@@ -1,3 +1,4 @@
+import url from 'node:url';
 import { readFileSync } from 'node:fs';
 
 export const readJSONSync = (path) => {
@@ -11,4 +12,18 @@ export const getOpt = (option) => {
 		return true;
 	}
 	return false;
+};
+
+export const parseUrl = (input) => {
+	const u = new URL(input);
+	const {
+		username,
+		password,
+	} = u;
+	const baseUrl = url.format(u, { auth: false });
+	return {
+		username,
+		password,
+		baseUrl,
+	};
 };

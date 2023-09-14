@@ -1,3 +1,7 @@
+import * as assert from 'node:assert/strict';
+
+import { parseUrl } from './utils.js';
+
 class RequestError extends Error {
 	constructor(status, text, context) {
 		super(text);
@@ -38,17 +42,26 @@ const request = (url, user, password, method, body) => {
 
 class RabbitClient {
 	baseUrl;
-	#user;
+	#username;
 	#password;
 
-	constructor(baseUrl, user, password) {
+	constructor(url) {
+		assert.ok(url instanceof URL, `Expected URL object, got ${url}`);
+		assert.ok(['http:', 'https:'].includes(url.protocol), `Expected url protocol to be http or https, got ${url.protocol}`);
+
+		const {
+			username,
+			password,
+			baseUrl,
+		} = parseUrl(url);
+
 		this.baseUrl = baseUrl;
-		this.#user = user;
+		this.#username = username;
 		this.#password = password;
 	}
 
 	request(method, path, body) {
-		return request(`${this.baseUrl}${path}`, this.#user, this.#password, method, body);
+		return request(new URL(path, this.baseUrl).toString(), this.#username, this.#password, method, body);
 	}
 
 	async requestBindings() {

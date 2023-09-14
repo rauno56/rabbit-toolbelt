@@ -7,7 +7,7 @@ import { inspect } from 'node:util';
 import validate from './src/validate.js';
 import diff from './src/diff.js';
 import deploy from './src/deploy.js';
-import { getOpt, readJSONSync } from './src/utils.js';
+import { getOpt, readJSONSync, parseUrl } from './src/utils.js';
 
 const opts = {
 	json: getOpt('--json'),
@@ -30,10 +30,10 @@ if (
 	console.error('\tdiff <path/definitions.before.json> <path/definitions.after.json>');
 	console.error('\t         Diffs two definition files.');
 	console.error();
-	console.error('\tdeploy <user> <password> <base url for server> <path/definitions.to.deploy.json>');
+	console.error('\tdeploy <base url for the server> <path/definitions.to.deploy.json>');
 	console.error('\t         Connects to the server and deploys the state in provided definitions file.');
-	console.error('\t         Base url is root url for the server with the schema: http://dev.rabbitmq.com');
-	console.error('\t         User and password are require. Unauthenticated access is not supported.');
+	console.error('\t         Base url is root url for the server: http://username:password@dev.rabbitmq.com');
+	console.error('\t         Protocol is required to be http or https.');
 	process.exit(1);
 }
 
@@ -96,8 +96,8 @@ const commands = {
 			)
 		);
 	},
-	deploy: (user, password, serverBaseUrl, definitions) => {
-		return deploy(user, password, serverBaseUrl, readJSONSync(definitions));
+	deploy: (serverBaseUrl, definitions) => {
+		return deploy(new URL(serverBaseUrl), readJSONSync(definitions));
 	},
 };
 
