@@ -19,6 +19,13 @@ const opts = {
 
 const [,, subcommand, ...args] = process.argv;
 
+const unparsedOptions = args.filter((a) => a.startsWith('-'));
+
+if (unparsedOptions.length) {
+	console.error(`Unrecognized options: ${unparsedOptions.join(', ')}`);
+	process.exit(1);
+}
+
 if (
 	!subcommand
 	|| opts.h
