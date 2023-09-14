@@ -1,6 +1,5 @@
-import diff from './diff.js';
-import { key } from './Index.js';
 import RabbitClient from './RabbitClient.js';
+import { diffServer } from './deploy.utils.js';
 
 const T = {
 	exchange: 'e',
@@ -21,18 +20,19 @@ const C = {
 	},
 };
 
-const deployResources = async (client, changes, operation, type) => {
+const deployResources = async (client, changes, operation, type, operationOverride = null) => {
 	const entries = changes[operation][type];
 	if (entries.length) {
 		const result = await Promise.allSettled(
 			entries
 				.map((resource) => {
-					const [method, url] = C[operation][type](resource);
+					const op = operationOverride ?? operation;
+					const [method, url] = C[op][type](resource);
 					if (method && url) {
 						return client.request(method, url, resource);
 					}
 
-					throw new Error(`Invalid operation "${operation}" on type "${type}"`);
+					throw new Error(`Invalid operation "${op}" on type "${type}"`);
 				})
 		);
 
@@ -48,49 +48,61 @@ const deployResources = async (client, changes, operation, type) => {
 	}
 };
 
-const indexPropertiesKeyMap = (bindings) => {
-	return new Map(bindings.map((item) => {
-		return [key.binding(item), item.properties_key];
-	}));
-};
-
-const diffServer = async (client, definitions) => {
-	const [
-		bindings,
-		current,
-	] = await Promise.all([
-		client.requestBindings(),
-		client.requestDefinitions(),
-	]);
-	const propertiesKeyMap = indexPropertiesKeyMap(bindings);
-	const changes = diff(current, definitions);
-
-	for (const b of changes['deleted']['bindings']) {
-		const bKey = key.binding(b);
-		const properties_key = propertiesKeyMap.get(bKey);
-		if (properties_key) {
-			b.properties_key = properties_key;
-		} else {
-			console.warn('Cannot find properties_key for binding', b);
-		}
-	}
-
-	return changes;
-};
-
-const deploy = async (definitions, serverBaseUrl) => {
+const deploy = async (definitions, serverBaseUrl, { noDeletions = false, recreateChanged = false }) => {
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
+
+	console.log('noDeletions && recreateChanged', noDeletions,	 recreateChanged);
+	const changedResourceCount = (
+		changes.changed.vhosts.length
+		+ changes.changed.exchanges.length
+		+ changes.changed.queues.length
+		+ changes.changed.bindings.length
+	);
+	if (noDeletions && recreateChanged) {
+		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
+	}
+	if (changedResourceCount && !recreateChanged) {
+		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
+	}
+
+	if (recreateChanged) {
+		// Delete changed resources
+		await deployResources(client, changes, 'changed', 'vhosts', 'deleted');
+		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
+		await deployResources(client, changes, 'changed', 'queues', 'deleted');
+		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
+	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
 	await deployResources(client, changes, 'added', 'exchanges');
 	await deployResources(client, changes, 'added', 'queues');
 	await deployResources(client, changes, 'added', 'bindings');
 
-	await deployResources(client, changes, 'deleted', 'bindings');
-	await deployResources(client, changes, 'deleted', 'queues');
-	await deployResources(client, changes, 'deleted', 'exchanges');
-	await deployResources(client, changes, 'deleted', 'vhosts');
+	if (recreateChanged) {
+		// Recreate changed resources
+		await deployResources(client, changes, 'changed', 'vhosts', 'added');
+		await deployResources(client, changes, 'changed', 'exchanges', 'added');
+		await deployResources(client, changes, 'changed', 'queues', 'added');
+		await deployResources(client, changes, 'changed', 'bindings', 'added');
+	}
+
+	const deletedResourceCount = (
+		changes.deleted.vhosts.length
+		+ changes.deleted.exchanges.length
+		+ changes.deleted.queues.length
+		+ changes.deleted.bindings.length
+	);
+	if (!noDeletions) {
+		await deployResources(client, changes, 'deleted', 'bindings');
+		await deployResources(client, changes, 'deleted', 'queues');
+		await deployResources(client, changes, 'deleted', 'exchanges');
+		await deployResources(client, changes, 'deleted', 'vhosts');
+	} else {
+		if (deletedResourceCount) {
+			console.warn(`Ignored ${deletedResourceCount} deleted resource(s). Remove --no-deletions to remove deleted resources from server.`);
+		}
+	}
 };
 
 export default deploy;
