@@ -7,7 +7,8 @@ import { inspect } from 'node:util';
 import validate from './src/validate.js';
 import diff from './src/diff.js';
 import deploy from './src/deploy.js';
-import { getOpt, readJSONSync, parseUrl } from './src/utils.js';
+import { getOpt, readJSONSync } from './src/utils.js';
+import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
 	json: getOpt('--json'),
@@ -29,11 +30,12 @@ if (
 	console.error('\t         usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
 	console.error();
 	console.error('\tdiff <path/definitions.before.json> <path/definitions.after.json>');
-	console.error('\t         Diffs two definition files.');
+	console.error('\t         Diffs two definition files or servers.');
+	console.error('\t         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error();
-	console.error('\tdeploy <base url for the server> <path/definitions.to.deploy.json>');
-	console.error('\t         Connects to the server and deploys the state in provided definitions file.');
-	console.error('\t         Base url is root url for the server: http://username:password@dev.rabbitmq.com');
+	console.error('\tdeploy <base url for a management API> <path/definitions.to.deploy.json>');
+	console.error('\t         Connects to a management API and deploys the state in provided definitions file.');
+	console.error('\t         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('\t         Protocol is required to be http or https.');
 	process.exit(1);
 }
@@ -69,14 +71,16 @@ const commands = {
 			console.log('OK');
 		}
 	},
-	diff: (beforeInput, afterInput) => {
-		assert.equal(typeof beforeInput, 'string', 'Path to before definitions required');
-		assert.equal(typeof afterInput, 'string', 'Path to after definitions required');
+	diff: async (beforeInput, afterInput) => {
+		assert.equal(typeof beforeInput, 'string', 'Path or url to before definitions required');
+		assert.equal(typeof afterInput, 'string', 'Path or url to after definitions required');
 
-		const before = path.resolve(beforeInput);
-		const after = path.resolve(afterInput);
+		const [before, after] = await Promise.all([
+			resolveDefinitions(beforeInput),
+			resolveDefinitions(afterInput),
+		]);
 
-		const result = diff(readJSONSync(before), readJSONSync(after));
+		const result = diff(before, after);
 
 		if (opts.json) {
 			return console.log(JSON.stringify(result));
@@ -109,7 +113,7 @@ const commands = {
 };
 
 if (typeof commands[subcommand] === 'function') {
-	commands[subcommand](...args);
+	await commands[subcommand](...args);
 } else {
 	console.error('Running rabbit-validator without subcommand is deprecated');
 	commands.validate(subcommand, args[0]);
