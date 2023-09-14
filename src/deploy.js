@@ -78,8 +78,8 @@ const diffServer = async (client, definitions) => {
 	return changes;
 };
 
-const deploy = async (user, password, serverBaseUrl, definitions) => {
-	const client = new RabbitClient(serverBaseUrl, user, password);
+const deploy = async (serverBaseUrl, definitions) => {
+	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 
 	await deployResources(client, changes, 'added', 'vhosts');
