@@ -52,7 +52,6 @@ const deploy = async (definitions, serverBaseUrl, { noDeletions = false, recreat
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 
-	console.log('noDeletions && recreateChanged', noDeletions,	 recreateChanged);
 	const changedResourceCount = (
 		changes.changed.vhosts.length
 		+ changes.changed.exchanges.length

@@ -16,7 +16,7 @@ const opts = {
 	help: getOpt('--help'),
 	summary: getOpt('--summary'),
 	noDeletions: getOpt('--no-deletions'),
-	recreateChanged: getOpt(	'--recreate-changed'),
+	recreateChanged: getOpt('--recreate-changed'),
 };
 
 const [,, subcommand, ...args] = process.argv;
@@ -35,17 +35,26 @@ if (
 ) {
 	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
 	console.error('Commands:');
-	console.error('\tvalidate <path/definitions.json> [<path/usage.json>] # Validates definition file');
-	console.error('\t         usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
 	console.error();
-	console.error('\tdiff <path/definitions.before.json> <path/definitions.after.json>');
-	console.error('\t         Diffs two definition files or servers.');
-	console.error('\t         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
+	console.error('validate <path/definitions.json> [<path/usage.json>]');
+	console.error('         Validates definition file.');
+	console.error('         usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
 	console.error();
-	console.error('\tdeploy <path/definitions.to.deploy.json> <base url for a management API>');
-	console.error('\t         Connects to a management API and deploys the state in provided definitions file.');
-	console.error('\t         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
-	console.error('\t         Protocol is required to be http or https.');
+	console.error('diff <path/definitions.before.json> <path/definitions.after.json>');
+	console.error('         Diffs two definition files or servers.');
+	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
+	console.error('         Options:');
+	console.error('         --json \t Output into JSON to make parsing the result with another programm easier');
+	console.error();
+	console.error('deploy <path/definitions.to.deploy.json> <base url for a management API>');
+	console.error('         Connects to a management API and deploys the state in provided definitions file.');
+	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
+	console.error('         Protocol is required to be http or https.');
+	console.error('         Options:');
+	console.error('         --no-deletions     \tNever delete any resources.');
+	console.error('         --recreate-changed \tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
+	console.error('                            \tBy default changes are not deployed, but this option turns it on.');
+	console.error('                            \tUse with caution because it will affect channels actively using those resources.');
 	process.exit(1);
 }
 
