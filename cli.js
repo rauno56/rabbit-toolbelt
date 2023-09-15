@@ -44,7 +44,7 @@ if (
 	console.error('         Diffs two definition files or servers.');
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
-	console.error('         --json \t Output into JSON to make parsing the result with another programm easier');
+	console.error('         --json \t Output JSON to make parsing the result with another programm easier');
 	console.error();
 	console.error('deploy <path/definitions.to.deploy.json> <base url for a management API>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
