@@ -7,7 +7,7 @@ import { inspect } from 'node:util';
 import validate from './src/validate.js';
 import diff from './src/diff.js';
 import deploy from './src/deploy.js';
-import { getOpt, readJSONSync } from './src/utils.js';
+import { getOpt, getOptValue, readJSONSync } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
@@ -15,6 +15,7 @@ const opts = {
 	h: getOpt('-h'),
 	help: getOpt('--help'),
 	summary: getOpt('--summary'),
+	limit: parseInt(getOptValue('--limit')),
 	noDeletions: getOpt('--no-deletions'),
 	recreateChanged: getOpt('--recreate-changed'),
 };
@@ -44,7 +45,8 @@ if (
 	console.error('         Diffs two definition files or servers.');
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
-	console.error('         --json \t Output JSON to make parsing the result with another programm easier');
+	console.error('         --json \t Output JSON to make parsing the result with another programm easier.');
+	console.error('         --limit\t Limit the number of each type of changes to show.');
 	console.error();
 	console.error('deploy <path/definitions.to.deploy.json> <base url for a management API>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
@@ -105,6 +107,11 @@ const commands = {
 		}
 
 		inspect.defaultOptions.depth += 3;
+		inspect.defaultOptions.compact = 7;
+		inspect.defaultOptions.breakLength = 200;
+		inspect.defaultOptions.maxStringLength = Infinity;
+		inspect.defaultOptions.maxArrayLength = opts.limit || Infinity;
+
 		console.log(
 			Object.fromEntries(
 				Object.entries(result)
