@@ -56,8 +56,8 @@ class RabbitClient {
 		} = parseUrl(url);
 
 		this.baseUrl = baseUrl;
-		this.#username = username;
-		this.#password = password;
+		this.#username = decodeURIComponent(username);
+		this.#password = decodeURIComponent(password);
 	}
 
 	request(method, path, body) {
