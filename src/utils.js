@@ -15,6 +15,15 @@ export const getOpt = (option) => {
 	return false;
 };
 
+export const getOptValue = (option) => {
+	const index = process.argv.indexOf(option);
+	if (~index) {
+		const [, value] = process.argv.splice(index, 2);
+		return value;
+	}
+	return null;
+};
+
 export const pathResolve = (input) => {
 	if (URL.canParse(input)) {
 		return new URL(input);
