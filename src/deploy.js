@@ -48,7 +48,7 @@ const deployResources = async (client, changes, operation, type, operationOverri
 	}
 };
 
-const deploy = async (definitions, serverBaseUrl, { noDeletions = false, recreateChanged = false }) => {
+const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreateChanged = false }) => {
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 

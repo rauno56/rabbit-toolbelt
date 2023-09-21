@@ -48,7 +48,7 @@ if (
 	console.error('         --json \t Output JSON to make parsing the result with another programm easier.');
 	console.error('         --limit\t Limit the number of each type of changes to show.');
 	console.error();
-	console.error('deploy <path/definitions.to.deploy.json> <base url for a management API>');
+	console.error('deploy <base url for a management API> <path/definitions.to.deploy.json>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
 	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('         Protocol is required to be http or https.');
@@ -132,18 +132,17 @@ const commands = {
 			)
 		);
 	},
-	deploy: (definitions, serverBaseUrl) => {
+	deploy: (serverBaseUrl, definitions) => {
 		const {
 			noDeletions,
 			recreateChanged,
 		} = opts;
 
 		return deploy(
+			new URL(serverBaseUrl),
 			readJSONSync(definitions),
-			new URL(serverBaseUrl), {
-				noDeletions,
-				recreateChanged,
-			});
+			{ noDeletions, recreateChanged }
+		);
 	},
 };
 
