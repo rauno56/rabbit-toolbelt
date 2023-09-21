@@ -51,14 +51,14 @@ const rootStructure = {
 	})),
 	permissions: array(object({
 		user: string(),
-		vhost: string(),
+		vhost: normalString(),
 		configure: string(),
 		write: string(),
 		read: string(),
 	})),
 	topic_permissions: array(object({
 		user: string(),
-		vhost: string(),
+		vhost: normalString(),
 		exchange: string(),
 		write: string(),
 		read: string(),
@@ -68,13 +68,13 @@ const rootStructure = {
 		value: string(),
 	}))),
 	parameters: array(object({
-		vhost: string(),
+		vhost: normalString(),
 		component: string(),
 		name: normalString(),
 		value: union([object(), string()]),
 	})),
 	policies: array(object({
-		vhost: string(),
+		vhost: normalString(),
 		name: normalString(),
 		pattern: string(),
 		'apply-to': string(),
