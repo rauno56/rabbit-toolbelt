@@ -14,11 +14,13 @@ export default (throwOnFirstError = true) => {
 		}
 		return assert[method] = (...args) => {
 			try {
-				return nodeAssert[method](...args);
+				nodeAssert[method](...args);
+				return true;
 			} catch (err) {
 				// deduplicating all the "duplicate X" failures
 				const failure = new Failure({ message: err.message, stack: err.stack });
 				failures.set(failure.message, failure);
+				return false;
 			}
 		};
 	};
