@@ -46,6 +46,37 @@ describe('diff', () => {
 		assert.equal(deleted[0].name, 'deleted');
 	});
 
+	it('catches changes to users', () => {
+		const before = copy(valid);
+		const after = copy(valid);
+		after.users.push({
+			name: 'new',
+			password_hash: 'ph',
+			hashing_algorithm: 'alg',
+			tags: ['admin'],
+			limits: {},
+		});
+		before.users.push({
+			name: 'deleted',
+			password_hash: 'ph',
+			hashing_algorithm: 'alg',
+			tags: ['admin'],
+			limits: {},
+		});
+		const changedItem = after.users[0];
+		changedItem.tags = [...changedItem.tags, 'new-tag'];
+		const { added: { users: added }, deleted: { users: deleted }, changed: { users: changed } } = diff(before, after);
+		assert.equal(added.length, 1);
+		assert.equal(added[0].name, 'new');
+		assert.equal(deleted.length, 1);
+		assert.equal(deleted[0].name, 'deleted');
+		assert.equal(changed.length, 1);
+		assert.equal(changed[0].before.name, changedItem.name);
+		assert.notDeepEqual(changed[0].before.tags, changedItem.tags);
+		assert.equal(changed[0].after.name, changedItem.name);
+		assert.equal(changed[0].after.tags, changedItem.tags);
+	});
+
 	it('catches changes to queues', () => {
 		const before = copy(valid);
 		const after = copy(valid);
