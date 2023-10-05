@@ -91,7 +91,7 @@ class Index {
 				get(name) { return db.vhost.get(name); },
 				delete(name) { return db.vhost.delete(name); },
 				remove(item) { return db.vhost.delete(key.vhost(item)); },
-				set(name, item) { return db.vhost.set(name, item); },
+				add(item) { return db.vhost.set(key.vhost(item), item); },
 			},
 			queue: {
 				count() { return db.queue.size; },
@@ -108,9 +108,9 @@ class Index {
 					return db.queue.delete(key.queue({ name, vhost }));
 				},
 				remove(item) { return db.queue.delete(key.queue(item)); },
-				set(name, vhost, item) {
-					pushToMapOfArrays(db.resourceByVhost, vhost, item);
-					return db.queue.set(key.queue({ name, vhost }), item);
+				add(item) {
+					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
+					return db.queue.set(key.queue(item), item);
 				},
 			},
 			exchange: {
@@ -128,9 +128,9 @@ class Index {
 					return db.exchange.delete(key.exchange({ name, vhost }));
 				},
 				remove(item) { return db.exchange.delete(key.exchange(item)); },
-				set(name, vhost, item) {
-					pushToMapOfArrays(db.resourceByVhost, vhost, item);
-					return db.exchange.set(key.exchange({ name, vhost }), item);
+				add(item) {
+					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
+					return db.exchange.set(key.exchange(item), item);
 				},
 			},
 			binding: {
@@ -142,7 +142,7 @@ class Index {
 				},
 				delete(binding) { return db.binding.delete(key.binding(binding)); },
 				remove(item) { return db.binding.delete(key.binding(item)); },
-				set(binding) {
+				add(binding) {
 					assertObj(binding);
 					const source = maps.exchange.get(binding.source, binding.vhost);
 					if (source) {
@@ -167,7 +167,7 @@ class Index {
 				getByHash(key) { return db.user.get(key); },
 				get(item) { return db.user.get(key.user(item)); },
 				remove(item) { return db.user.delete(key.user(item)); },
-				set(item) { return db.user.set(key.user(item), item); },
+				add(item) { return db.user.set(key.user(item), item); },
 			},
 			resource: {
 				get byVhost() { return db.resourceByVhost; },
@@ -191,7 +191,7 @@ class Index {
 				continue;
 			}
 			assert.ok(!this.vhost.get(vhost.name), `Duplicate vhost: "${vhost.name}"`);
-			this.vhost.set(vhost.name, vhost);
+			this.vhost.add(vhost);
 		}
 
 		for (const queue of definitions.queues) {
@@ -201,7 +201,7 @@ class Index {
 			}
 			assert.ok(this.vhost.get(queue.vhost), `Missing vhost: "${queue.vhost}"`);
 			assert.ok(!this.queue.get(queue.name, queue.vhost), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
-			this.queue.set(queue.name, queue.vhost, queue);
+			this.queue.add(queue);
 		}
 
 		for (const exchange of definitions.exchanges) {
@@ -211,7 +211,7 @@ class Index {
 			}
 			assert.ok(this.vhost.get(exchange.vhost), `Missing vhost: "${exchange.vhost}"`);
 			assert.ok(!this.exchange.get(exchange.name, exchange.vhost), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
-			this.exchange.set(exchange.name, exchange.vhost, exchange);
+			this.exchange.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
@@ -239,7 +239,7 @@ class Index {
 			}
 
 			assert.ok(!this.binding.get(binding), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
-			this.binding.set(binding);
+			this.binding.add(binding);
 		}
 
 		for (const user of definitions.users) {
@@ -249,7 +249,7 @@ class Index {
 				continue;
 			}
 			assert.ok(!this.user.get(user), `Duplicate user: "${name}"`);
-			this.user.set(user);
+			this.user.add(user);
 		}
 
 		return assert.collectFailures();
