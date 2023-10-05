@@ -8,12 +8,14 @@ const T = {
 const C = {
 	added: {
 		vhosts: (r) => ['PUT', `/api/vhosts/${encodeURIComponent(r.name)}`],
+		users: (r) => ['PUT', `/api/users/${encodeURIComponent(r.name)}`],
 		queues: (r) => ['PUT', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		exchanges: (r) => ['PUT', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		bindings: (r) => ['POST', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${r.destination}`],
 	},
 	deleted: {
 		vhosts: (r) => ['DELETE', `/api/vhosts/${encodeURIComponent(r.name)}`],
+		users: (r) => ['DELETE', `/api/users/${encodeURIComponent(r.name)}`],
 		queues: (r) => ['DELETE', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		exchanges: (r) => ['DELETE', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		bindings: (r) => ['DELETE', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${encodeURIComponent(r.destination)}/${encodeURIComponent(r.properties_key || '~')}`],
@@ -57,6 +59,7 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		+ changes.changed.exchanges.length
 		+ changes.changed.queues.length
 		+ changes.changed.bindings.length
+		+ changes.changed.users.length
 	);
 	if (noDeletions && recreateChanged) {
 		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
@@ -71,12 +74,14 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
+		await deployResources(client, changes, 'changed', 'users', 'deleted');
 	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
 	await deployResources(client, changes, 'added', 'exchanges');
 	await deployResources(client, changes, 'added', 'queues');
 	await deployResources(client, changes, 'added', 'bindings');
+	await deployResources(client, changes, 'added', 'users');
 
 	if (recreateChanged) {
 		// Recreate changed resources
@@ -84,6 +89,7 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
+		await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
 	const deletedResourceCount = (
@@ -91,12 +97,14 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		+ changes.deleted.exchanges.length
 		+ changes.deleted.queues.length
 		+ changes.deleted.bindings.length
+		+ changes.deleted.users.length
 	);
 	if (!noDeletions) {
 		await deployResources(client, changes, 'deleted', 'bindings');
 		await deployResources(client, changes, 'deleted', 'queues');
 		await deployResources(client, changes, 'deleted', 'exchanges');
 		await deployResources(client, changes, 'deleted', 'vhosts');
+		await deployResources(client, changes, 'deleted', 'users');
 	} else {
 		if (deletedResourceCount) {
 			console.warn(`Ignored ${deletedResourceCount} deleted resource(s). Remove --no-deletions to remove deleted resources from server.`);
