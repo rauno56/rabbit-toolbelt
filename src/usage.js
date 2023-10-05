@@ -22,14 +22,14 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	for (const u of usageStats) {
 		const vhost = u.vhost;
 		if (u.exchange) {
-			if (!index.exchange.get(u.exchange, vhost)) {
+			if (!index.exchange.get({ vhost, name: u.exchange })) {
 				console.warn(`Warning: Used but missing exchange "${u.exchange}"" in "${vhost}"`);
 			}
-			if (!index.queue.get(u.queue, vhost)) {
+			if (!index.queue.get({ vhost, name: u.queue })) {
 				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
 			}
 		} else if (u.queue) {
-			if (!index.queue.get(u.queue, vhost)) {
+			if (!index.queue.get({ vhost, name: u.queue })) {
 				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
 			}
 		} else {
@@ -43,12 +43,12 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 
 	for (const u of usageStats) {
 		const vhost = u.vhost;
-		index.vhost.delete(vhost);
+		index.vhost.remove({ name: vhost });
 		if (u.exchange) {
-			index.exchange.delete(u.exchange, vhost);
-			index.queue.delete(u.queue, vhost);
+			index.exchange.remove({ vhost, name: u.exchange });
+			index.queue.remove({ vhost, name: u.queue });
 		} else if (u.queue) {
-			index.queue.delete(u.queue, vhost);
+			index.queue.remove({ vhost, name: u.queue });
 		} else {
 			throw new Error('Unexpected usage record type');
 		}
