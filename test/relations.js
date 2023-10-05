@@ -123,6 +123,15 @@ describe('asserting relations', () => {
 				assertRelations(def);
 			}, /duplicate.*binding/i);
 		});
+
+		it('users', () => {
+			const def = copy(valid);
+			def.users.push(def.users[0]);
+
+			assert.throws(() => {
+				assertRelations(def);
+			}, /duplicate.*user/i);
+		});
 	});
 
 	it('exchange does not exist for binding', () => {

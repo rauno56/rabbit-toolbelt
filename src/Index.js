@@ -22,11 +22,14 @@ export const key = {
 		if (typeof resource.type === 'string') {
 			return key.exchange(resource);
 		}
-		if (typeof resource.vhost === 'string') {
+		if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
 			return key.queue(resource);
 		}
-		if (typeof resource.name === 'string') {
+		if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
 			return key.vhost(resource);
+		}
+		if (typeof resource.password_hash === 'string') {
+			return key.user(resource);
 		}
 		const err = new Error('Invalid resource');
 		err.context = resource;
@@ -36,6 +39,7 @@ export const key = {
 	queue: ({ name, vhost }) => `Q[${name} @ ${vhost}]`,
 	exchange: ({ name, vhost }) => `E[${name} @ ${vhost}]`,
 	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`,
+	user: ({ name }) => `${name}`,
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
 	},
@@ -62,12 +66,12 @@ class Index {
 
 	init() {
 		const db = {
+			// vhosts: vhost.name -> vhost
+			vhost: new Map(),
 			// queues: vhost.name -> Q
 			queue: new Map(),
 			// exchanges: vhost.name -> EX
 			exchange: new Map(),
-			// vhosts: vhost.name -> vhost
-			vhost: new Map(),
 			// EX/Q: vhost.name -> EX/Q
 			resourceByVhost: new Map(),
 			// bindings: source -> destination -> args
@@ -76,6 +80,7 @@ class Index {
 			bindingByDestination: new Map(),
 			// bindings: {resource} -> binding[]
 			bindingBySource: new Map(),
+			user: new Map(),
 		};
 
 		const maps = {
@@ -156,6 +161,14 @@ class Index {
 					return db.bindingBySource.get(key.resource(resource));
 				},
 			},
+			user: {
+				count() { return db.user.size; },
+				all() { return [...db.user.values()]; },
+				getByKey(key) { return db.user.get(key); },
+				get(item) { return db.user.get(key.user(item)); },
+				remove(item) { return db.user.delete(key.user(item)); },
+				set(item) { return db.user.set(key.user(item), item); },
+			},
 			resource: {
 				get byVhost() { return db.resourceByVhost; },
 			},
@@ -227,6 +240,16 @@ class Index {
 
 			assert.ok(!this.binding.get(binding), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
 			this.binding.set(binding);
+		}
+
+		for (const user of definitions.users) {
+			const { name } = user;
+			if (!name) {
+				// will not report failure because it'd already be caught by the structural validation
+				continue;
+			}
+			assert.ok(!this.user.get(user), `Duplicate user: "${name}"`);
+			this.user.set(user);
 		}
 
 		return assert.collectFailures();
