@@ -33,6 +33,12 @@ export const key = {
 		if (typeof resource.password_hash === 'string') {
 			return key.user(resource);
 		}
+		if (typeof resource.configure === 'string') {
+			return key.permission(resource);
+		}
+		if (typeof resource.write === 'string') {
+			return key.topicPermission(resource);
+		}
 		const err = new Error('Invalid resource');
 		err.context = resource;
 		throw err;
@@ -62,6 +68,17 @@ export const key = {
 	user: ({ name }) => {
 		assertStr(name, 'name');
 		return `U[${name}]`;
+	},
+	permission: ({ vhost, user }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		return `P[${user} @ ${vhost}]`;
+	},
+	topicPermission: ({ vhost, user, exchange }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		assertStr(exchange, 'exchange');
+		return `T[${user} @ ${vhost}.${exchange}]`;
 	},
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
@@ -127,15 +144,12 @@ class Index {
 
 		const maps = {
 			vhost: new HashSet(key.vhost),
-			queue: new HashSet(
-				key.queue,
-				pushToResourceByVhost
-			),
-			exchange: new HashSet(
-				key.exchange, pushToResourceByVhost
-			),
+			queue: new HashSet(key.queue, pushToResourceByVhost),
+			exchange: new HashSet(key.exchange, pushToResourceByVhost),
 			binding: bindingSet,
 			user: new HashSet(key.user),
+			permission: new HashSet(key.permission, pushToResourceByVhost),
+			topicPermission: new HashSet(key.topicPermission, pushToResourceByVhost),
 			resource: {
 				get byVhost() { return resourceByVhost; },
 			},
@@ -217,6 +231,26 @@ class Index {
 			}
 			assert.ok(!this.user.get(user), `Duplicate user: "${name}"`);
 			this.user.add(user);
+		}
+
+		for (const permission of definitions.permissions) {
+			const { user, vhost } = permission;
+			if (!user || !vhost) {
+				// will not report failure because it'd already be caught by the structural validation
+				continue;
+			}
+			assert.ok(!this.permission.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
+			this.permission.add(permission);
+		}
+
+		for (const permission of definitions.topic_permissions) {
+			const { user, vhost } = permission;
+			if (!user || !vhost) {
+				// will not report failure because it'd already be caught by the structural validation
+				continue;
+			}
+			assert.ok(!this.topicPermission.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topicPermission.get(permission))}"`);
+			this.topicPermission.add(permission);
 		}
 
 		return assert.collectFailures();
