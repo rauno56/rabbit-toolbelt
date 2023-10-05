@@ -13,8 +13,8 @@ const diffMapsConsuming = (before, after) => {
 
 	for (const afterItem of after.all()) {
 		const beforeItem = before.getByHash(key.resource(afterItem));
-		after.remove(afterItem);
-		before.remove(afterItem);
+		after.delete(afterItem);
+		before.delete(afterItem);
 		if (beforeItem === undefined) {
 			added.push(afterItem);
 		} else if (!isDeepStrictEqual(beforeItem, afterItem)) {
@@ -22,7 +22,7 @@ const diffMapsConsuming = (before, after) => {
 		}
 	}
 	for (const beforeItem of before.all()) {
-		before.remove(beforeItem);
+		before.delete(beforeItem);
 		deleted.push(beforeItem);
 	}
 

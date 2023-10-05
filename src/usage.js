@@ -43,12 +43,12 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 
 	for (const u of usageStats) {
 		const vhost = u.vhost;
-		index.vhost.remove({ name: vhost });
+		index.vhost.delete({ name: vhost });
 		if (u.exchange) {
-			index.exchange.remove({ vhost, name: u.exchange });
-			index.queue.remove({ vhost, name: u.queue });
+			index.exchange.delete({ vhost, name: u.exchange });
+			index.queue.delete({ vhost, name: u.queue });
 		} else if (u.queue) {
-			index.queue.remove({ vhost, name: u.queue });
+			index.queue.delete({ vhost, name: u.queue });
 		} else {
 			throw new Error('Unexpected usage record type');
 		}
