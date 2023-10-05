@@ -85,7 +85,7 @@ class Index {
 
 		const maps = {
 			vhost: {
-				count() { return db.vhost.size; },
+				get size() { return db.vhost.size; },
 				all() { return [...db.vhost.values()]; },
 				getByHash(key) { return db.vhost.get(key); },
 				get(name) { return db.vhost.get(name); },
@@ -94,7 +94,7 @@ class Index {
 				add(item) { return db.vhost.set(key.vhost(item), item); },
 			},
 			queue: {
-				count() { return db.queue.size; },
+				get size() { return db.queue.size; },
 				all() { return [...db.queue.values()]; },
 				getByHash(key) { return db.queue.get(key); },
 				get(name, vhost) {
@@ -114,7 +114,7 @@ class Index {
 				},
 			},
 			exchange: {
-				count() { return db.exchange.size; },
+				get size() { return db.exchange.size; },
 				all() { return [...db.exchange.values()]; },
 				getByHash(key) { return db.exchange.get(key); },
 				get(name, vhost) {
@@ -134,7 +134,7 @@ class Index {
 				},
 			},
 			binding: {
-				count() { return db.binding.size; },
+				get size() { return db.binding.size; },
 				all() { return [...db.binding.values()]; },
 				getByHash(key) { return db.binding.get(key); },
 				get(binding) {
@@ -162,7 +162,7 @@ class Index {
 				},
 			},
 			user: {
-				count() { return db.user.size; },
+				get size() { return db.user.size; },
 				all() { return [...db.user.values()]; },
 				getByHash(key) { return db.user.get(key); },
 				get(item) { return db.user.get(key.user(item)); },
