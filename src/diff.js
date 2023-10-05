@@ -12,7 +12,7 @@ const diffMapsConsuming = (before, after) => {
 	assert.equal(typeof after?.all, 'function', `Invalid after state: ${inspect(after)}`);
 
 	for (const afterItem of after.all()) {
-		const beforeItem = before.getByKey(key.resource(afterItem));
+		const beforeItem = before.getByHash(key.resource(afterItem));
 		after.remove(afterItem);
 		before.remove(afterItem);
 		if (beforeItem === undefined) {

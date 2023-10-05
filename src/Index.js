@@ -87,7 +87,7 @@ class Index {
 			vhost: {
 				count() { return db.vhost.size; },
 				all() { return [...db.vhost.values()]; },
-				getByKey(key) { return db.vhost.get(key); },
+				getByHash(key) { return db.vhost.get(key); },
 				get(name) { return db.vhost.get(name); },
 				delete(name) { return db.vhost.delete(name); },
 				remove(item) { return db.vhost.delete(key.vhost(item)); },
@@ -96,7 +96,7 @@ class Index {
 			queue: {
 				count() { return db.queue.size; },
 				all() { return [...db.queue.values()]; },
-				getByKey(key) { return db.queue.get(key); },
+				getByHash(key) { return db.queue.get(key); },
 				get(name, vhost) {
 					assertStr(name, 'name');
 					assertStr(vhost, 'vhost');
@@ -116,7 +116,7 @@ class Index {
 			exchange: {
 				count() { return db.exchange.size; },
 				all() { return [...db.exchange.values()]; },
-				getByKey(key) { return db.exchange.get(key); },
+				getByHash(key) { return db.exchange.get(key); },
 				get(name, vhost) {
 					assertStr(name, 'name');
 					assertStr(vhost, 'vhost');
@@ -136,7 +136,7 @@ class Index {
 			binding: {
 				count() { return db.binding.size; },
 				all() { return [...db.binding.values()]; },
-				getByKey(key) { return db.binding.get(key); },
+				getByHash(key) { return db.binding.get(key); },
 				get(binding) {
 					return db.binding.get(key.binding(binding));
 				},
@@ -164,7 +164,7 @@ class Index {
 			user: {
 				count() { return db.user.size; },
 				all() { return [...db.user.values()]; },
-				getByKey(key) { return db.user.get(key); },
+				getByHash(key) { return db.user.get(key); },
 				get(item) { return db.user.get(key.user(item)); },
 				remove(item) { return db.user.delete(key.user(item)); },
 				set(item) { return db.user.set(key.user(item), item); },
