@@ -89,8 +89,7 @@ class Index {
 				all() { return [...db.vhost.values()]; },
 				getByHash(key) { return db.vhost.get(key); },
 				get(item) { return db.vhost.get(key.vhost(item)); },
-				delete(name) { return db.vhost.delete(name); },
-				remove(item) { return db.vhost.delete(key.vhost(item)); },
+				delete(item) { return db.vhost.delete(key.vhost(item)); },
 				add(item) { return db.vhost.set(key.vhost(item), item); },
 			},
 			queue: {
@@ -102,10 +101,7 @@ class Index {
 					assertStr(item.vhost, 'vhost');
 					return db.queue.get(key.queue(item));
 				},
-				delete(name, vhost) {
-					return db.queue.delete(key.queue({ name, vhost }));
-				},
-				remove(item) { return db.queue.delete(key.queue(item)); },
+				delete(item) { return db.queue.delete(key.queue(item)); },
 				add(item) {
 					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
 					return db.queue.set(key.queue(item), item);
@@ -118,12 +114,7 @@ class Index {
 				get(item) {
 					return db.exchange.get(key.exchange(item));
 				},
-				delete(name, vhost) {
-					assertStr(name, 'name');
-					assertStr(vhost, 'vhost');
-					return db.exchange.delete(key.exchange({ name, vhost }));
-				},
-				remove(item) { return db.exchange.delete(key.exchange(item)); },
+				delete(item) { return db.exchange.delete(key.exchange(item)); },
 				add(item) {
 					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
 					return db.exchange.set(key.exchange(item), item);
@@ -136,8 +127,7 @@ class Index {
 				get(item) {
 					return db.binding.get(key.binding(item));
 				},
-				delete(binding) { return db.binding.delete(key.binding(binding)); },
-				remove(item) { return db.binding.delete(key.binding(item)); },
+				delete(item) { return db.binding.delete(key.binding(item)); },
 				add(binding) {
 					assertObj(binding);
 					const source = maps.exchange.get({
@@ -168,7 +158,7 @@ class Index {
 				all() { return [...db.user.values()]; },
 				getByHash(key) { return db.user.get(key); },
 				get(item) { return db.user.get(key.user(item)); },
-				remove(item) { return db.user.delete(key.user(item)); },
+				delete(item) { return db.user.delete(key.user(item)); },
 				add(item) { return db.user.set(key.user(item), item); },
 			},
 			resource: {
