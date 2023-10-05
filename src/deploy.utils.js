@@ -12,6 +12,9 @@ export const diffServer = async (client, definitions) => {
 		bindings,
 		current,
 	] = await Promise.all([
+		// Must request bindings separately because properties_key is
+		// not included in standard definitions file. Later merge
+		// with the definitions file to be able to deploy changes.
 		client.requestBindings(),
 		client.requestDefinitions(),
 	]);
