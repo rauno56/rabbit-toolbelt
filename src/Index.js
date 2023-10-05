@@ -38,11 +38,31 @@ export const key = {
 		throw err;
 	},
 	// the implementation assumes all hash functions are unique for a given input
-	vhost: ({ name }) => `${name}`,
-	queue: ({ vhost, name }) => `Q[${name} @ ${vhost}]`,
-	exchange: ({ vhost, name }) => `E[${name} @ ${vhost}]`,
-	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`,
-	user: ({ name }) => `U[${name}]`,
+	vhost: ({ name }) => {
+		assertStr(name, 'name');
+		return `${name}`;
+	},
+	queue: ({ vhost, name }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(name, 'name');
+		return `Q[${name} @ ${vhost}]`;
+	},
+	exchange: ({ vhost, name }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(name, 'name');
+		return `E[${name} @ ${vhost}]`;
+	},
+	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(source, 'source');
+		assertStr(destination, 'destination');
+		assertStr(destination_type, 'destination_type');
+		return `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`;
+	},
+	user: ({ name }) => {
+		assertStr(name, 'name');
+		return `U[${name}]`;
+	},
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
 	},
