@@ -36,8 +36,8 @@ export const key = {
 		throw err;
 	},
 	vhost: ({ name }) => `${name}`,
-	queue: ({ name, vhost }) => `Q[${name} @ ${vhost}]`,
-	exchange: ({ name, vhost }) => `E[${name} @ ${vhost}]`,
+	queue: ({ vhost, name }) => `Q[${name} @ ${vhost}]`,
+	exchange: ({ vhost, name }) => `E[${name} @ ${vhost}]`,
 	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`,
 	user: ({ name }) => `${name}`,
 	args: (args) => {
@@ -88,7 +88,7 @@ class Index {
 				get size() { return db.vhost.size; },
 				all() { return [...db.vhost.values()]; },
 				getByHash(key) { return db.vhost.get(key); },
-				get(name) { return db.vhost.get(name); },
+				get(item) { return db.vhost.get(key.vhost(item)); },
 				delete(name) { return db.vhost.delete(name); },
 				remove(item) { return db.vhost.delete(key.vhost(item)); },
 				add(item) { return db.vhost.set(key.vhost(item), item); },
@@ -97,14 +97,12 @@ class Index {
 				get size() { return db.queue.size; },
 				all() { return [...db.queue.values()]; },
 				getByHash(key) { return db.queue.get(key); },
-				get(name, vhost) {
-					assertStr(name, 'name');
-					assertStr(vhost, 'vhost');
-					return db.queue.get(key.queue({ name, vhost }));
+				get(item) {
+					assertStr(item.name, 'name');
+					assertStr(item.vhost, 'vhost');
+					return db.queue.get(key.queue(item));
 				},
 				delete(name, vhost) {
-					assertStr(name, 'name');
-					assertStr(vhost, 'vhost');
 					return db.queue.delete(key.queue({ name, vhost }));
 				},
 				remove(item) { return db.queue.delete(key.queue(item)); },
@@ -117,10 +115,8 @@ class Index {
 				get size() { return db.exchange.size; },
 				all() { return [...db.exchange.values()]; },
 				getByHash(key) { return db.exchange.get(key); },
-				get(name, vhost) {
-					assertStr(name, 'name');
-					assertStr(vhost, 'vhost');
-					return db.exchange.get(key.exchange({ name, vhost }));
+				get(item) {
+					return db.exchange.get(key.exchange(item));
 				},
 				delete(name, vhost) {
 					assertStr(name, 'name');
@@ -137,18 +133,24 @@ class Index {
 				get size() { return db.binding.size; },
 				all() { return [...db.binding.values()]; },
 				getByHash(key) { return db.binding.get(key); },
-				get(binding) {
-					return db.binding.get(key.binding(binding));
+				get(item) {
+					return db.binding.get(key.binding(item));
 				},
 				delete(binding) { return db.binding.delete(key.binding(binding)); },
 				remove(item) { return db.binding.delete(key.binding(item)); },
 				add(binding) {
 					assertObj(binding);
-					const source = maps.exchange.get(binding.source, binding.vhost);
+					const source = maps.exchange.get({
+						vhost: binding.vhost,
+						name: binding.source,
+					});
 					if (source) {
 						pushToMapOfArrays(db.bindingBySource, key.resource(source), binding);
 					}
-					const destination = maps[binding.destination_type].get(binding.destination, binding.vhost);
+					const destination = maps[binding.destination_type].get({
+						vhost: binding.vhost,
+						name: binding.destination,
+					});
 					if (destination) {
 						pushToMapOfArrays(db.bindingByDestination, key.resource(destination), binding);
 					}
@@ -190,7 +192,7 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.vhost.get(vhost.name), `Duplicate vhost: "${vhost.name}"`);
+			assert.ok(!this.vhost.get(vhost), `Duplicate vhost: "${vhost.name}"`);
 			this.vhost.add(vhost);
 		}
 
@@ -199,8 +201,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get(queue.vhost), `Missing vhost: "${queue.vhost}"`);
-			assert.ok(!this.queue.get(queue.name, queue.vhost), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
+			assert.ok(this.vhost.getByHash(queue.vhost), `Missing vhost: "${queue.vhost}"`);
+			assert.ok(!this.queue.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queue.add(queue);
 		}
 
@@ -209,18 +211,18 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get(exchange.vhost), `Missing vhost: "${exchange.vhost}"`);
-			assert.ok(!this.exchange.get(exchange.name, exchange.vhost), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+			assert.ok(this.vhost.getByHash(exchange.vhost), `Missing vhost: "${exchange.vhost}"`);
+			assert.ok(!this.exchange.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchange.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
-			assert.ok(this.vhost.get(vhost), `Missing vhost: "${vhost}"`);
-			const from = this.exchange.get(binding.source, vhost);
+			assert.ok(this.vhost.getByHash(vhost), `Missing vhost: "${vhost}"`);
+			const from = this.exchange.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
-			const to = this[binding.destination_type].get(binding.destination, vhost);
+			const to = this[binding.destination_type].get({ vhost, name: binding.destination });
 			assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
 
 			if (from) {
