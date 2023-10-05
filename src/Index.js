@@ -1,5 +1,6 @@
 import * as nodeAssert from 'node:assert/strict';
 
+import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
 
 const assertStr = (str, key) => nodeAssert.equal(typeof str, 'string', `Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`);
@@ -35,11 +36,12 @@ export const key = {
 		err.context = resource;
 		throw err;
 	},
+	// the implementation assumes all hash functions are unique for a given input
 	vhost: ({ name }) => `${name}`,
 	queue: ({ vhost, name }) => `Q[${name} @ ${vhost}]`,
 	exchange: ({ vhost, name }) => `E[${name} @ ${vhost}]`,
 	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`,
-	user: ({ name }) => `${name}`,
+	user: ({ name }) => `U[${name}]`,
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
 	},
@@ -66,8 +68,6 @@ class Index {
 
 	init() {
 		const db = {
-			// vhosts: vhost.name -> vhost
-			vhost: new Map(),
 			// queues: vhost.name -> Q
 			queue: new Map(),
 			// exchanges: vhost.name -> EX
@@ -84,14 +84,7 @@ class Index {
 		};
 
 		const maps = {
-			vhost: {
-				get size() { return db.vhost.size; },
-				all() { return [...db.vhost.values()]; },
-				getByHash(key) { return db.vhost.get(key); },
-				get(item) { return db.vhost.get(key.vhost(item)); },
-				delete(item) { return db.vhost.delete(key.vhost(item)); },
-				add(item) { return db.vhost.set(key.vhost(item), item); },
-			},
+			vhost: new HashSet(key.vhost),
 			queue: {
 				get size() { return db.queue.size; },
 				all() { return [...db.queue.values()]; },
@@ -191,7 +184,7 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.getByHash(queue.vhost), `Missing vhost: "${queue.vhost}"`);
+			assert.ok(this.vhost.get({ name: queue.vhost }), `Missing vhost: "${queue.vhost}"`);
 			assert.ok(!this.queue.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queue.add(queue);
 		}
@@ -201,14 +194,14 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.getByHash(exchange.vhost), `Missing vhost: "${exchange.vhost}"`);
+			assert.ok(this.vhost.get({ name: exchange.vhost }), `Missing vhost: "${exchange.vhost}"`);
 			assert.ok(!this.exchange.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchange.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
-			assert.ok(this.vhost.getByHash(vhost), `Missing vhost: "${vhost}"`);
+			assert.ok(this.vhost.get({ name: vhost }), `Missing vhost: "${vhost}"`);
 			const from = this.exchange.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
