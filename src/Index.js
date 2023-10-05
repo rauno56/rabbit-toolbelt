@@ -7,6 +7,9 @@ const assertStr = (str, key) => nodeAssert.equal(typeof str, 'string', `Expected
 const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
 
 const pushToMapOfArrays = (map, key, item) => {
+	nodeAssert.ok(map instanceof Map);
+	nodeAssert.equal(typeof key, 'string');
+	nodeAssert.equal(typeof item, 'object');
 	let array = map.get(key);
 	if (!array) {
 		map.set(key, [item]);
@@ -54,6 +57,8 @@ class Index {
 	queue = null;
 	exchange = null;
 	binding = null;
+	user = null;
+	resource = null;
 
 	static fromDefinitions(definitions, throwOnFirstError) {
 		const index = new Index();
@@ -67,95 +72,54 @@ class Index {
 	}
 
 	init() {
-		const db = {
-			// queues: vhost.name -> Q
-			queue: new Map(),
-			// exchanges: vhost.name -> EX
-			exchange: new Map(),
-			// EX/Q: vhost.name -> EX/Q
-			resourceByVhost: new Map(),
-			// bindings: source -> destination -> args
-			binding: new Map(),
-			// bindings: {resource} -> binding[]
-			bindingByDestination: new Map(),
-			// bindings: {resource} -> binding[]
-			bindingBySource: new Map(),
-			user: new Map(),
+		// EX/Q: vhost.name -> EX/Q
+		const resourceByVhost = new Map();
+		// bindings: {resource} -> binding[]
+		const bindingByDestination = new Map();
+		// bindings: {resource} -> binding[]
+		const bindingBySource = new Map();
+
+		const pushToResourceByVhost = (item) => {
+			pushToMapOfArrays(resourceByVhost, item.vhost, item);
+		};
+
+		const bindingSet = new HashSet(key.binding, (item) => {
+			assertObj(item);
+			const source = maps.exchange.get({
+				vhost: item.vhost,
+				name: item.source,
+			});
+			if (source) {
+				pushToMapOfArrays(bindingBySource, key.resource(source), item);
+			}
+			const destination = maps[item.destination_type].get({
+				vhost: item.vhost,
+				name: item.destination,
+			});
+			if (destination) {
+				pushToMapOfArrays(bindingByDestination, key.resource(destination), item);
+			}
+		});
+		bindingSet.byDestination = (resource) => {
+			return bindingByDestination.get(key.resource(resource));
+		};
+		bindingSet.bySource = (resource) => {
+			return bindingBySource.get(key.resource(resource));
 		};
 
 		const maps = {
 			vhost: new HashSet(key.vhost),
-			queue: {
-				get size() { return db.queue.size; },
-				all() { return [...db.queue.values()]; },
-				getByHash(key) { return db.queue.get(key); },
-				get(item) {
-					assertStr(item.name, 'name');
-					assertStr(item.vhost, 'vhost');
-					return db.queue.get(key.queue(item));
-				},
-				delete(item) { return db.queue.delete(key.queue(item)); },
-				add(item) {
-					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
-					return db.queue.set(key.queue(item), item);
-				},
-			},
-			exchange: {
-				get size() { return db.exchange.size; },
-				all() { return [...db.exchange.values()]; },
-				getByHash(key) { return db.exchange.get(key); },
-				get(item) {
-					return db.exchange.get(key.exchange(item));
-				},
-				delete(item) { return db.exchange.delete(key.exchange(item)); },
-				add(item) {
-					pushToMapOfArrays(db.resourceByVhost, item.vhost, item);
-					return db.exchange.set(key.exchange(item), item);
-				},
-			},
-			binding: {
-				get size() { return db.binding.size; },
-				all() { return [...db.binding.values()]; },
-				getByHash(key) { return db.binding.get(key); },
-				get(item) {
-					return db.binding.get(key.binding(item));
-				},
-				delete(item) { return db.binding.delete(key.binding(item)); },
-				add(binding) {
-					assertObj(binding);
-					const source = maps.exchange.get({
-						vhost: binding.vhost,
-						name: binding.source,
-					});
-					if (source) {
-						pushToMapOfArrays(db.bindingBySource, key.resource(source), binding);
-					}
-					const destination = maps[binding.destination_type].get({
-						vhost: binding.vhost,
-						name: binding.destination,
-					});
-					if (destination) {
-						pushToMapOfArrays(db.bindingByDestination, key.resource(destination), binding);
-					}
-					return db.binding.set(key.binding(binding), binding);
-				},
-				byDestination(resource) {
-					return db.bindingByDestination.get(key.resource(resource));
-				},
-				bySource(resource) {
-					return db.bindingBySource.get(key.resource(resource));
-				},
-			},
-			user: {
-				get size() { return db.user.size; },
-				all() { return [...db.user.values()]; },
-				getByHash(key) { return db.user.get(key); },
-				get(item) { return db.user.get(key.user(item)); },
-				delete(item) { return db.user.delete(key.user(item)); },
-				add(item) { return db.user.set(key.user(item), item); },
-			},
+			queue: new HashSet(
+				key.queue,
+				pushToResourceByVhost
+			),
+			exchange: new HashSet(
+				key.exchange, pushToResourceByVhost
+			),
+			binding: bindingSet,
+			user: new HashSet(key.user),
 			resource: {
-				get byVhost() { return db.resourceByVhost; },
+				get byVhost() { return resourceByVhost; },
 			},
 		};
 
