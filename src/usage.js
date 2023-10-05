@@ -37,9 +37,9 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		}
 	}
 
-	const exchangeSizeBefore = index.exchange.count();
-	const queueSizeBefore = index.queue.count();
-	const vhostSizeBefore = index.vhost.count();
+	const exchangeSizeBefore = index.exchange.size;
+	const queueSizeBefore = index.queue.size;
+	const vhostSizeBefore = index.vhost.size;
 
 	for (const u of usageStats) {
 		const vhost = u.vhost;
