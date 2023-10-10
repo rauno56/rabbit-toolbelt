@@ -57,6 +57,19 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 		assert.ok(index.vhost.get({ name: vhost }), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
 	}
 
+	// TODO: test this
+	for (const [/* key */, permission] of index.topicPermission) {
+		const { vhost, exchange: exchangeName, user } = permission;
+		assert.ok(index.exchange.get({ vhost, name: exchangeName }), `Missing exchange "${exchangeName}" in vhost "${vhost}" used by topic permission for "${user}"`);
+		assert.ok(index.user.get({ name: user }), `Missing user "${user}" used by topic permission for exchange "${exchangeName}"`);
+	}
+
+	// TODO: test this
+	for (const [/* key */, permission] of index.permission) {
+		const { vhost, user } = permission;
+		assert.ok(index.user.get({ name: user }), `Missing user "${user}" that has permissions set for vhost "${vhost}"`);
+	}
+
 	return [...indexingFailures, ...assert.collectFailures()];
 };
 

@@ -33,13 +33,25 @@ const diffMapsConsuming = (before, after) => {
 	};
 };
 
+const makeChangeMap = () => {
+	return {
+		vhosts: [],
+		queues: [],
+		exchanges: [],
+		bindings: [],
+		users: [],
+		permissions: [],
+		topicPermissions: [],
+	};
+};
+
 const diff = (beforeDef, afterDef) => {
 	const before = Index.fromDefinitions(beforeDef, false);
 	const after = Index.fromDefinitions(afterDef, false);
 
-	const added = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
-	const deleted = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
-	const changed = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
+	const added = makeChangeMap();
+	const deleted = makeChangeMap();
+	const changed = makeChangeMap();
 
 	const collectDiff = (key, beforeMap, afterMap) => {
 		const changes = diffMapsConsuming(beforeMap, afterMap);
@@ -53,6 +65,8 @@ const diff = (beforeDef, afterDef) => {
 	collectDiff('exchanges', before.exchange, after.exchange);
 	collectDiff('bindings', before.binding, after.binding);
 	collectDiff('users', before.user, after.user);
+	collectDiff('permissions', before.permission, after.permission);
+	collectDiff('topicPermissions', before.topicPermission, after.topicPermission);
 
 	return {
 		added,
