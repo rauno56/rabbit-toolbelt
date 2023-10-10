@@ -43,7 +43,11 @@ const deployResources = async (client, changes, operation, type, operationOverri
 		const failed = result.filter(({ status }) => status !== 'fulfilled');
 		const failedNotice = result.length !== succeeded.length && `, ${result.length - succeeded.length} failed` || '';
 
-		console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
+		if (operation === 'changed') {
+			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
+		} else {
+			console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
+		}
 
 		if (failed.length) {
 			throw failed[0].reason;
