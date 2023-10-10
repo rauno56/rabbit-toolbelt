@@ -77,6 +77,68 @@ describe('diff', () => {
 		assert.equal(changed[0].after.tags, changedItem.tags);
 	});
 
+	it('catches changes to permissions', () => {
+		const before = copy(valid);
+		const after = copy(valid);
+		after.permissions.push({
+			user: 'new',
+			vhost: '/',
+			configure: '.*',
+			write: '.*',
+			read: '.*',
+		});
+		before.permissions.push({
+			user: 'deleted',
+			vhost: '/',
+			configure: '.*',
+			write: '.*',
+			read: '.*',
+		});
+		const changedItem = after.permissions[0];
+		changedItem.configure = '';
+		const { added: { permissions: added }, deleted: { permissions: deleted }, changed: { permissions: changed } } = diff(before, after);
+		assert.equal(added.length, 1);
+		assert.equal(added[0].user, 'new');
+		assert.equal(deleted.length, 1);
+		assert.equal(deleted[0].user, 'deleted');
+		assert.equal(changed.length, 1);
+		assert.equal(changed[0].before.user, changedItem.user);
+		assert.equal(changed[0].before.configure, '.*');
+		assert.equal(changed[0].after.user, changedItem.user);
+		assert.equal(changed[0].after.configure, changedItem.configure);
+	});
+
+	it('catches changes to topic permissions', () => {
+		const before = copy(valid);
+		const after = copy(valid);
+		after.topic_permissions.push({
+			user: 'new',
+			vhost: '/',
+			exchange: 'defect_direct',
+			write: '.*',
+			read: '.*',
+		});
+		before.topic_permissions.push({
+			user: 'deleted',
+			vhost: '/',
+			exchange: 'defect_direct',
+			write: '.*',
+			read: '.*',
+		});
+		const changedItem = after.topic_permissions[0];
+		changedItem.write = '';
+		const { added: { topicPermissions: added }, deleted: { topicPermissions: deleted }, changed: { topicPermissions: changed } } = diff(before, after);
+		assert.equal(added.length, 1);
+		assert.equal(added[0].user, 'new');
+		assert.equal(deleted.length, 1);
+		assert.equal(deleted[0].user, 'deleted');
+		assert.equal(changed.length, 1);
+		assert.equal(changed[0].before.user, changedItem.user);
+		assert.equal(changed[0].before.write, '.*');
+		assert.equal(changed[0].after.user, changedItem.user);
+		assert.equal(changed[0].after.write, changedItem.write);
+	});
+
 	it('catches changes to queues', () => {
 		const before = copy(valid);
 		const after = copy(valid);

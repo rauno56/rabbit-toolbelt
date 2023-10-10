@@ -1,18 +1,19 @@
 import assert from 'assert/strict';
 import { isDeepStrictEqual, inspect } from 'util';
 
-import Index, { key } from './Index.js';
+import Index from './Index.js';
+import HashSet from './HashSet.js';
 
 const diffMapsConsuming = (before, after) => {
 	const added = [];
 	const deleted = [];
 	const changed = [];
 
-	assert.equal(typeof before?.all, 'function', `Invalid before state: ${inspect(before)}`);
-	assert.equal(typeof after?.all, 'function', `Invalid after state: ${inspect(after)}`);
+	assert.ok(before instanceof HashSet, `Invalid before state: ${inspect(before)}`);
+	assert.ok(after instanceof HashSet, `Invalid after state: ${inspect(after)}`);
 
-	for (const afterItem of after.all()) {
-		const beforeItem = before.getByHash(key.resource(afterItem));
+	for (const afterItem of after.values()) {
+		const beforeItem = before.get(afterItem);
 		after.delete(afterItem);
 		before.delete(afterItem);
 		if (beforeItem === undefined) {
@@ -21,7 +22,7 @@ const diffMapsConsuming = (before, after) => {
 			changed.push({ before: beforeItem, after: afterItem });
 		}
 	}
-	for (const beforeItem of before.all()) {
+	for (const beforeItem of before.values()) {
 		before.delete(beforeItem);
 		deleted.push(beforeItem);
 	}
@@ -33,13 +34,25 @@ const diffMapsConsuming = (before, after) => {
 	};
 };
 
+const makeChangeMap = () => {
+	return {
+		vhosts: [],
+		queues: [],
+		exchanges: [],
+		bindings: [],
+		users: [],
+		permissions: [],
+		topicPermissions: [],
+	};
+};
+
 const diff = (beforeDef, afterDef) => {
 	const before = Index.fromDefinitions(beforeDef, false);
 	const after = Index.fromDefinitions(afterDef, false);
 
-	const added = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
-	const deleted = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
-	const changed = { vhosts: [], queues: [], exchanges: [], bindings: [], users: [] };
+	const added = makeChangeMap();
+	const deleted = makeChangeMap();
+	const changed = makeChangeMap();
 
 	const collectDiff = (key, beforeMap, afterMap) => {
 		const changes = diffMapsConsuming(beforeMap, afterMap);
@@ -53,6 +66,8 @@ const diff = (beforeDef, afterDef) => {
 	collectDiff('exchanges', before.exchange, after.exchange);
 	collectDiff('bindings', before.binding, after.binding);
 	collectDiff('users', before.user, after.user);
+	collectDiff('permissions', before.permission, after.permission);
+	collectDiff('topicPermissions', before.topicPermission, after.topicPermission);
 
 	return {
 		added,

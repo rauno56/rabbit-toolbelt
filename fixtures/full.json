@@ -12,6 +12,13 @@
         "administrator"
       ],
       "limits": {}
+    },
+    {
+      "name": "limited",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
     }
   ],
   "vhosts": [
@@ -31,7 +38,15 @@
       "read": ".*"
     }
   ],
-  "topic_permissions": [],
+  "topic_permissions": [
+    {
+      "user": "limited",
+      "vhost": "/",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
   "parameters": [],
   "global_parameters": [
     {

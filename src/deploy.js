@@ -29,9 +29,10 @@ const deployResources = async (client, changes, operation, type, operationOverri
 			entries
 				.map((resource) => {
 					const op = operationOverride ?? operation;
-					const [method, url] = C[op][type](resource);
-					if (method && url) {
-						return client.request(method, url, resource);
+					if (typeof C[op][type] === 'function') {
+						const resourceArg = resource.after || resource;
+						const [method, url] = C[op][type](resourceArg);
+						return client.request(method, url, resourceArg);
 					}
 
 					throw new Error(`Invalid operation "${op}" on type "${type}"`);
@@ -42,7 +43,11 @@ const deployResources = async (client, changes, operation, type, operationOverri
 		const failed = result.filter(({ status }) => status !== 'fulfilled');
 		const failedNotice = result.length !== succeeded.length && `, ${result.length - succeeded.length} failed` || '';
 
-		console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
+		if (operation === 'changed') {
+			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
+		} else {
+			console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
+		}
 
 		if (failed.length) {
 			throw failed[0].reason;
@@ -54,18 +59,28 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 
-	const changedResourceCount = (
-		changes.changed.vhosts.length
-		+ changes.changed.exchanges.length
-		+ changes.changed.queues.length
-		+ changes.changed.bindings.length
-		+ changes.changed.users.length
-	);
+	const changedResourceCount = Object.entries(changes.changed)
+		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
+
 	if (noDeletions && recreateChanged) {
 		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
 	}
 	if (changedResourceCount && !recreateChanged) {
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
+	}
+
+	if (changes.changed.users.length) {
+		console.warn('Changing users is not yet supported');
+	}
+	const permissionDiffCount = Object.entries(changes)
+		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
+	if (permissionDiffCount) {
+		console.warn('Deploying permissions is not yet supported');
+	}
+	const topicPermissionDiffCount = Object.entries(changes)
+		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
+	if (topicPermissionDiffCount) {
+		console.warn('Deploying topic permissions is not yet supported');
 	}
 
 	if (recreateChanged) {
@@ -74,7 +89,7 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
-		await deployResources(client, changes, 'changed', 'users', 'deleted');
+		// await deployResources(client, changes, 'changed', 'users', 'deleted');
 	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
@@ -89,16 +104,11 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
-		await deployResources(client, changes, 'changed', 'users', 'added');
+		// await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
-	const deletedResourceCount = (
-		changes.deleted.vhosts.length
-		+ changes.deleted.exchanges.length
-		+ changes.deleted.queues.length
-		+ changes.deleted.bindings.length
-		+ changes.deleted.users.length
-	);
+	const deletedResourceCount = Object.entries(changes.deleted)
+		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
 	if (!noDeletions) {
 		await deployResources(client, changes, 'deleted', 'bindings');
 		await deployResources(client, changes, 'deleted', 'queues');

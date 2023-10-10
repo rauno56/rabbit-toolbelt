@@ -1,6 +1,6 @@
 import * as nodeAssert from 'node:assert/strict';
 
-import { assertObj } from './utils.js';
+import { assertObj, assertStr } from './utils.js';
 import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
 
@@ -16,26 +16,36 @@ const pushToMapOfArrays = (map, key, item) => {
 	}
 };
 
+export const detectResourceType = (resource) => {
+	if (typeof resource.destination_type === 'string') {
+		return 'binding';
+	}
+	if (typeof resource.type === 'string') {
+		return 'exchange';
+	}
+	if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
+		return 'queue';
+	}
+	if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
+		return 'vhost';
+	}
+	if (typeof resource.password_hash === 'string') {
+		return 'user';
+	}
+	if (typeof resource.configure === 'string') {
+		return 'permission';
+	}
+	if (typeof resource.write === 'string') {
+		return 'topicPermission';
+	}
+	const err = new Error('Unknown resource');
+	err.context = resource;
+	throw err;
+};
+
 export const key = {
 	resource: (resource) => {
-		if (typeof resource.destination_type === 'string') {
-			return key.binding(resource);
-		}
-		if (typeof resource.type === 'string') {
-			return key.exchange(resource);
-		}
-		if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
-			return key.queue(resource);
-		}
-		if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
-			return key.vhost(resource);
-		}
-		if (typeof resource.password_hash === 'string') {
-			return key.user(resource);
-		}
-		const err = new Error('Invalid resource');
-		err.context = resource;
-		throw err;
+		return key[detectResourceType(resource)](resource);
 	},
 	// the implementation assumes all hash functions are unique for a given input
 	vhost: ({ name }) => {
@@ -62,6 +72,17 @@ export const key = {
 	user: ({ name }) => {
 		assertStr(name, 'name');
 		return `U[${name}]`;
+	},
+	permission: ({ vhost, user }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		return `P[${user} @ ${vhost}]`;
+	},
+	topicPermission: ({ vhost, user, exchange }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		assertStr(exchange, 'exchange');
+		return `TP[${user} @ ${vhost}.${exchange}]`;
 	},
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
@@ -103,6 +124,9 @@ class Index {
 
 		const bindingSet = new HashSet(key.binding, (item) => {
 			assertObj(item);
+
+			pushToMapOfArrays(resourceByVhost, item.vhost, item);
+
 			const source = maps.exchange.get({
 				vhost: item.vhost,
 				name: item.source,
@@ -127,15 +151,12 @@ class Index {
 
 		const maps = {
 			vhost: new HashSet(key.vhost),
-			queue: new HashSet(
-				key.queue,
-				pushToResourceByVhost
-			),
-			exchange: new HashSet(
-				key.exchange, pushToResourceByVhost
-			),
+			queue: new HashSet(key.queue, pushToResourceByVhost),
+			exchange: new HashSet(key.exchange, pushToResourceByVhost),
 			binding: bindingSet,
 			user: new HashSet(key.user),
+			permission: new HashSet(key.permission, pushToResourceByVhost),
+			topicPermission: new HashSet(key.topicPermission, pushToResourceByVhost),
 			resource: {
 				get byVhost() { return resourceByVhost; },
 			},
@@ -166,7 +187,6 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get({ name: queue.vhost }), `Missing vhost: "${queue.vhost}"`);
 			assert.ok(!this.queue.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queue.add(queue);
 		}
@@ -176,14 +196,12 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get({ name: exchange.vhost }), `Missing vhost: "${exchange.vhost}"`);
 			assert.ok(!this.exchange.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchange.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
-			assert.ok(this.vhost.get({ name: vhost }), `Missing vhost: "${vhost}"`);
 			const from = this.exchange.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
@@ -217,6 +235,26 @@ class Index {
 			}
 			assert.ok(!this.user.get(user), `Duplicate user: "${name}"`);
 			this.user.add(user);
+		}
+
+		for (const permission of definitions.permissions) {
+			const { user, vhost } = permission;
+			if (!user || !vhost) {
+				// will not report failure because it'd already be caught by the structural validation
+				continue;
+			}
+			assert.ok(!this.permission.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
+			this.permission.add(permission);
+		}
+
+		for (const permission of definitions.topic_permissions) {
+			const { user, vhost } = permission;
+			if (!user || !vhost) {
+				// will not report failure because it'd already be caught by the structural validation
+				continue;
+			}
+			assert.ok(!this.topicPermission.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topicPermission.get(permission))}"`);
+			this.topicPermission.add(permission);
 		}
 
 		return assert.collectFailures();
