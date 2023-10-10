@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import path from 'node:path';
 import url from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -44,3 +45,6 @@ export const parseUrl = (input) => {
 		baseUrl,
 	};
 };
+
+export const assertStr = (str, key) => assert.equal(typeof str, 'string', `Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`);
+export const assertObj = (obj) => assert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
