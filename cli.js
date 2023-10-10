@@ -17,6 +17,7 @@ const opts = {
 	summary: getOpt('--summary'),
 	limit: parseInt(getOptValue('--limit')),
 	noDeletions: getOpt('--no-deletions'),
+	dryRun: getOpt('--dry-run'),
 	recreateChanged: getOpt('--recreate-changed'),
 };
 
@@ -53,6 +54,7 @@ if (
 	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('         Protocol is required to be http or https.');
 	console.error('         Options:');
+	console.error('         --dry-run          \tRun as configured but make all non-GET network calls no-op.');
 	console.error('         --no-deletions     \tNever delete any resources.');
 	console.error('         --recreate-changed \tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
 	console.error('                            \tBy default changes are not deployed, but this option turns it on.');
@@ -136,12 +138,13 @@ const commands = {
 		const {
 			noDeletions,
 			recreateChanged,
+			dryRun,
 		} = opts;
 
 		return deploy(
 			new URL(serverBaseUrl),
 			readJSONSync(definitions),
-			{ noDeletions, recreateChanged }
+			{ dryRun, noDeletions, recreateChanged }
 		);
 	},
 };

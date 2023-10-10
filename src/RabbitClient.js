@@ -42,10 +42,11 @@ const request = (url, user, password, method, body) => {
 
 class RabbitClient {
 	baseUrl;
+	dryRun;
 	#username;
 	#password;
 
-	constructor(url) {
+	constructor(url, { dryRun = false } = {}) {
 		assert.ok(url instanceof URL, `Expected URL object, got ${url}`);
 		assert.ok(['http:', 'https:'].includes(url.protocol), `Expected url protocol to be http or https, got ${url.protocol}`);
 
@@ -56,11 +57,20 @@ class RabbitClient {
 		} = parseUrl(url);
 
 		this.baseUrl = baseUrl;
+		this.dryRun = dryRun;
 		this.#username = decodeURIComponent(username);
 		this.#password = decodeURIComponent(password);
 	}
 
 	request(method, path, body) {
+		// only do GET requests if dry run is requested
+		if (this.dryRun && method !== 'GET') {
+			return Promise.resolve({
+				url: new URL(path, this.baseUrl).toString(),
+				method,
+				body,
+			});
+		}
 		return request(new URL(path, this.baseUrl).toString(), this.#username, this.#password, method, body);
 	}
 

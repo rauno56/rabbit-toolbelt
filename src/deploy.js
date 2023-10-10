@@ -55,8 +55,8 @@ const deployResources = async (client, changes, operation, type, operationOverri
 	}
 };
 
-const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreateChanged = false }) => {
-	const client = new RabbitClient(serverBaseUrl);
+const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false }) => {
+	const client = new RabbitClient(serverBaseUrl, { dryRun });
 	const changes = await diffServer(client, definitions);
 
 	const changedResourceCount = Object.entries(changes.changed)
