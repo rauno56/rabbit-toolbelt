@@ -73,13 +73,17 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
 	}
 
+	if (changes.changed.users.length) {
+		console.warn('Changing users is not yet supported');
+	}
+
 	if (recreateChanged) {
 		// Delete changed resources
 		await deployResources(client, changes, 'changed', 'vhosts', 'deleted');
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
-		await deployResources(client, changes, 'changed', 'users', 'deleted');
+		// await deployResources(client, changes, 'changed', 'users', 'deleted');
 	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
@@ -94,7 +98,7 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
-		await deployResources(client, changes, 'changed', 'users', 'added');
+		// await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
 	const deletedResourceCount = (
