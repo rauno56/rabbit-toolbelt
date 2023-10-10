@@ -16,32 +16,36 @@ const pushToMapOfArrays = (map, key, item) => {
 	}
 };
 
+export const detectResourceType = (resource) => {
+	if (typeof resource.destination_type === 'string') {
+		return 'binding';
+	}
+	if (typeof resource.type === 'string') {
+		return 'exchange';
+	}
+	if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
+		return 'queue';
+	}
+	if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
+		return 'vhost';
+	}
+	if (typeof resource.password_hash === 'string') {
+		return 'user';
+	}
+	if (typeof resource.configure === 'string') {
+		return 'permission';
+	}
+	if (typeof resource.write === 'string') {
+		return 'topicPermission';
+	}
+	const err = new Error('Unknown resource');
+	err.context = resource;
+	throw err;
+};
+
 export const key = {
 	resource: (resource) => {
-		if (typeof resource.destination_type === 'string') {
-			return key.binding(resource);
-		}
-		if (typeof resource.type === 'string') {
-			return key.exchange(resource);
-		}
-		if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
-			return key.queue(resource);
-		}
-		if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
-			return key.vhost(resource);
-		}
-		if (typeof resource.password_hash === 'string') {
-			return key.user(resource);
-		}
-		if (typeof resource.configure === 'string') {
-			return key.permission(resource);
-		}
-		if (typeof resource.write === 'string') {
-			return key.topicPermission(resource);
-		}
-		const err = new Error('Invalid resource');
-		err.context = resource;
-		throw err;
+		return key[detectResourceType(resource)](resource);
 	},
 	// the implementation assumes all hash functions are unique for a given input
 	vhost: ({ name }) => {
@@ -120,6 +124,9 @@ class Index {
 
 		const bindingSet = new HashSet(key.binding, (item) => {
 			assertObj(item);
+
+			pushToMapOfArrays(resourceByVhost, item.vhost, item);
+
 			const source = maps.exchange.get({
 				vhost: item.vhost,
 				name: item.source,
@@ -180,7 +187,6 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get({ name: queue.vhost }), `Missing vhost: "${queue.vhost}"`);
 			assert.ok(!this.queue.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queue.add(queue);
 		}
@@ -190,14 +196,12 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(this.vhost.get({ name: exchange.vhost }), `Missing vhost: "${exchange.vhost}"`);
 			assert.ok(!this.exchange.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchange.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
-			assert.ok(this.vhost.get({ name: vhost }), `Missing vhost: "${vhost}"`);
 			const from = this.exchange.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 

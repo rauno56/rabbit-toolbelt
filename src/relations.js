@@ -1,13 +1,20 @@
 import * as nodeAssert from 'node:assert/strict';
 
-import Index from './Index.js';
+import Index, { detectResourceType } from './Index.js';
 import failureCollector from './failureCollector.js';
 
 const formatResource = (resource) => {
-	if (resource.type) {
-		return `exchange "${resource.name}"`;
+	const type = detectResourceType(resource);
+	if (type === 'topicPermission') {
+		return `topic permission for "${resource.user}"`;
 	}
-	return `queue "${resource.name}"`;
+	if (type === 'permission') {
+		return `permission for "${resource.user}"`;
+	}
+	if (type === 'binding') {
+		return `binding from "${resource.source}" to ${resource.destination_type} "${resource.destination}"`;
+	}
+	return `${type} "${resource.name}"`;
 };
 
 const assertRelations = (definitions, throwOnFirstError = true) => {
@@ -15,7 +22,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	const assert = failureCollector(throwOnFirstError);
 	const index = new Index();
-	const failures = index.build(definitions, throwOnFirstError);
+	const indexingFailures = index.build(definitions, throwOnFirstError);
 
 	// test whether vhost is used anywhere
 	for (const vhost of definitions.vhosts) {
@@ -44,11 +51,13 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 		}
 	}
 
+	// TODO: test this
+	// test if used vhosts exist
 	for (const [vhost, res] of index.resource.byVhost.entries()) {
 		assert.ok(index.vhost.get({ name: vhost }), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
 	}
 
-	return failures;
+	return [...indexingFailures, ...assert.collectFailures()];
 };
 
 export const validateRelations = (def) => assertRelations(def, false);
