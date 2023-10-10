@@ -3,18 +3,29 @@ import * as nodeAssert from 'node:assert/strict';
 import Index, { detectResourceType } from './Index.js';
 import failureCollector from './failureCollector.js';
 
+export const singular = {
+	vhosts: 'vhost',
+	queues: 'queue',
+	exchanges: 'exchange',
+	bindings: 'binding',
+	users: 'user',
+	permissions: 'permission',
+	topic_permissions: 'topic permission',
+	args: 'args',
+};
+
 const formatResource = (resource) => {
 	const type = detectResourceType(resource);
-	if (type === 'topicPermission') {
+	if (type === 'topic_permissions') {
 		return `topic permission for "${resource.user}"`;
 	}
-	if (type === 'permission') {
+	if (type === 'permissions') {
 		return `permission for "${resource.user}"`;
 	}
-	if (type === 'binding') {
+	if (type === 'bindings') {
 		return `binding from "${resource.source}" to ${resource.destination_type} "${resource.destination}"`;
 	}
-	return `${type} "${resource.name}"`;
+	return `${singular[type]} "${resource.name}"`;
 };
 
 const assertRelations = (definitions, throwOnFirstError = true) => {

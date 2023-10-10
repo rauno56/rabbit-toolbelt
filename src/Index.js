@@ -18,25 +18,25 @@ const pushToMapOfArrays = (map, key, item) => {
 
 export const detectResourceType = (resource) => {
 	if (typeof resource.destination_type === 'string') {
-		return 'binding';
+		return 'bindings';
 	}
 	if (typeof resource.type === 'string') {
-		return 'exchange';
+		return 'exchanges';
 	}
 	if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
-		return 'queue';
+		return 'queues';
 	}
 	if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
-		return 'vhost';
+		return 'vhosts';
 	}
 	if (typeof resource.password_hash === 'string') {
-		return 'user';
+		return 'users';
 	}
 	if (typeof resource.configure === 'string') {
-		return 'permission';
+		return 'permissions';
 	}
 	if (typeof resource.write === 'string') {
-		return 'topicPermission';
+		return 'topic_permissions';
 	}
 	const err = new Error('Unknown resource');
 	err.context = resource;
@@ -48,37 +48,37 @@ export const key = {
 		return key[detectResourceType(resource)](resource);
 	},
 	// the implementation assumes all hash functions are unique for a given input
-	vhost: ({ name }) => {
+	vhosts: ({ name }) => {
 		assertStr(name, 'name');
 		return `${name}`;
 	},
-	queue: ({ vhost, name }) => {
+	queues: ({ vhost, name }) => {
 		assertStr(vhost, 'vhost');
 		assertStr(name, 'name');
 		return `Q[${name} @ ${vhost}]`;
 	},
-	exchange: ({ vhost, name }) => {
+	exchanges: ({ vhost, name }) => {
 		assertStr(vhost, 'vhost');
 		assertStr(name, 'name');
 		return `E[${name} @ ${vhost}]`;
 	},
-	binding: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => {
+	bindings: ({ vhost, source, destination_type, destination, routing_key, arguments: args }) => {
 		assertStr(vhost, 'vhost');
 		assertStr(source, 'source');
 		assertStr(destination, 'destination');
 		assertStr(destination_type, 'destination_type');
 		return `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`;
 	},
-	user: ({ name }) => {
+	users: ({ name }) => {
 		assertStr(name, 'name');
 		return `U[${name}]`;
 	},
-	permission: ({ vhost, user }) => {
+	permissions: ({ vhost, user }) => {
 		assertStr(vhost, 'vhost');
 		assertStr(user, 'user');
 		return `P[${user} @ ${vhost}]`;
 	},
-	topicPermission: ({ vhost, user, exchange }) => {
+	topic_permissions: ({ vhost, user, exchange }) => {
 		assertStr(vhost, 'vhost');
 		assertStr(user, 'user');
 		assertStr(exchange, 'exchange');
@@ -122,7 +122,7 @@ class Index {
 			pushToMapOfArrays(resourceByVhost, item.vhost, item);
 		};
 
-		const bindingSet = new HashSet(key.binding, (item) => {
+		const bindingSet = new HashSet(key.bindings, (item) => {
 			assertObj(item);
 
 			pushToMapOfArrays(resourceByVhost, item.vhost, item);
@@ -150,13 +150,13 @@ class Index {
 		};
 
 		const maps = {
-			vhost: new HashSet(key.vhost),
-			queue: new HashSet(key.queue, pushToResourceByVhost),
-			exchange: new HashSet(key.exchange, pushToResourceByVhost),
+			vhost: new HashSet(key.vhosts),
+			queue: new HashSet(key.queues, pushToResourceByVhost),
+			exchange: new HashSet(key.exchanges, pushToResourceByVhost),
 			binding: bindingSet,
-			user: new HashSet(key.user),
-			permission: new HashSet(key.permission, pushToResourceByVhost),
-			topicPermission: new HashSet(key.topicPermission, pushToResourceByVhost),
+			user: new HashSet(key.users),
+			permission: new HashSet(key.permissions, pushToResourceByVhost),
+			topicPermission: new HashSet(key.topic_permissions, pushToResourceByVhost),
 			resource: {
 				get byVhost() { return resourceByVhost; },
 			},

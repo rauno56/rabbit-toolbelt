@@ -3,7 +3,7 @@ import { key } from './Index.js';
 
 export const indexPropertiesKeyMap = (bindings) => {
 	return new Map(bindings.map((item) => {
-		return [key.binding(item), item.properties_key];
+		return [key.bindings(item), item.properties_key];
 	}));
 };
 
@@ -22,7 +22,7 @@ export const diffServer = async (client, definitions) => {
 	const changes = diff(current, definitions);
 
 	for (const b of changes['deleted']['bindings']) {
-		const bKey = key.binding(b);
+		const bKey = key.bindings(b);
 		const properties_key = propertiesKeyMap.get(bKey);
 		if (properties_key) {
 			b.properties_key = properties_key;
