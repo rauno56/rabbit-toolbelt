@@ -82,7 +82,7 @@ export const key = {
 		assertStr(vhost, 'vhost');
 		assertStr(user, 'user');
 		assertStr(exchange, 'exchange');
-		return `T[${user} @ ${vhost}.${exchange}]`;
+		return `TP[${user} @ ${vhost}.${exchange}]`;
 	},
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
