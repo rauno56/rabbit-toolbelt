@@ -1,10 +1,8 @@
 import * as nodeAssert from 'node:assert/strict';
 
+import { assertObj } from './utils.js';
 import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
-
-const assertStr = (str, key) => nodeAssert.equal(typeof str, 'string', `Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`);
-const assertObj = (obj) => nodeAssert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
 
 const pushToMapOfArrays = (map, key, item) => {
 	nodeAssert.ok(map instanceof Map);
