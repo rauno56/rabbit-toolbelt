@@ -27,3 +27,5 @@ export class HashSet extends Map {
 	// @deprecated -- use .values() directly
 	all() { return [...this.values()]; }
 }
+
+export default HashSet;
