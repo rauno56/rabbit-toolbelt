@@ -60,7 +60,9 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 	// TODO: test this
 	for (const [/* key */, permission] of index.topicPermission) {
 		const { vhost, exchange: exchangeName, user } = permission;
-		assert.ok(index.exchange.get({ vhost, name: exchangeName }), `Missing exchange "${exchangeName}" in vhost "${vhost}" used by topic permission for "${user}"`);
+		if (exchangeName !== '') {
+			assert.ok(index.exchange.get({ vhost, name: exchangeName }), `Missing exchange "${exchangeName}" in vhost "${vhost}" used by topic permission for "${user}"`);
+		}
 		assert.ok(index.user.get({ name: user }), `Missing user "${user}" used by topic permission for exchange "${exchangeName}"`);
 	}
 
