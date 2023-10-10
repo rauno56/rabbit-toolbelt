@@ -29,9 +29,10 @@ const deployResources = async (client, changes, operation, type, operationOverri
 			entries
 				.map((resource) => {
 					const op = operationOverride ?? operation;
-					const [method, url] = C[op][type](resource);
-					if (method && url) {
-						return client.request(method, url, resource);
+					if (typeof C[op][type] === 'function') {
+						const resourceArg = resource.after || resource;
+						const [method, url] = C[op][type](resourceArg);
+						return client.request(method, url, resourceArg);
 					}
 
 					throw new Error(`Invalid operation "${op}" on type "${type}"`);
