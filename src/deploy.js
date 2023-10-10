@@ -72,6 +72,16 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 	if (changes.changed.users.length) {
 		console.warn('Changing users is not yet supported');
 	}
+	const permissionDiffCount = Object.entries(changes)
+		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
+	if (permissionDiffCount) {
+		console.warn('Deploying permissions is not yet supported');
+	}
+	const topicPermissionDiffCount = Object.entries(changes)
+		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
+	if (topicPermissionDiffCount) {
+		console.warn('Deploying topic permissions is not yet supported');
+	}
 
 	if (recreateChanged) {
 		// Delete changed resources
