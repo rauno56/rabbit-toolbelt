@@ -59,13 +59,9 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 	const client = new RabbitClient(serverBaseUrl);
 	const changes = await diffServer(client, definitions);
 
-	const changedResourceCount = (
-		changes.changed.vhosts.length
-		+ changes.changed.exchanges.length
-		+ changes.changed.queues.length
-		+ changes.changed.bindings.length
-		+ changes.changed.users.length
-	);
+	const changedResourceCount = Object.entries(changes.changed)
+		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
+
 	if (noDeletions && recreateChanged) {
 		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
 	}
@@ -101,13 +97,8 @@ const deploy = async (serverBaseUrl, definitions, { noDeletions = false, recreat
 		// await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
-	const deletedResourceCount = (
-		changes.deleted.vhosts.length
-		+ changes.deleted.exchanges.length
-		+ changes.deleted.queues.length
-		+ changes.deleted.bindings.length
-		+ changes.deleted.users.length
-	);
+	const deletedResourceCount = Object.entries(changes.deleted)
+		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
 	if (!noDeletions) {
 		await deployResources(client, changes, 'deleted', 'bindings');
 		await deployResources(client, changes, 'deleted', 'queues');
