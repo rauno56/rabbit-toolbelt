@@ -1,6 +1,6 @@
 import * as nodeAssert from 'node:assert/strict';
 
-import { assertObj } from './utils.js';
+import { assertObj, assertStr } from './utils.js';
 import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
 
