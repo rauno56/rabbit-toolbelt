@@ -61,13 +61,13 @@ const diff = (beforeDef, afterDef) => {
 		changed[key].push(...changes.changed);
 	};
 
-	collectDiff('vhosts', before.vhost, after.vhost);
-	collectDiff('queues', before.queue, after.queue);
-	collectDiff('exchanges', before.exchange, after.exchange);
-	collectDiff('bindings', before.binding, after.binding);
-	collectDiff('users', before.user, after.user);
-	collectDiff('permissions', before.permission, after.permission);
-	collectDiff('topicPermissions', before.topicPermission, after.topicPermission);
+	collectDiff('vhosts', before.vhosts, after.vhosts);
+	collectDiff('queues', before.queues, after.queues);
+	collectDiff('exchanges', before.exchanges, after.exchanges);
+	collectDiff('bindings', before.bindings, after.bindings);
+	collectDiff('users', before.users, after.users);
+	collectDiff('permissions', before.permissions, after.permissions);
+	collectDiff('topicPermissions', before.topic_permissions, after.topic_permissions);
 
 	return {
 		added,

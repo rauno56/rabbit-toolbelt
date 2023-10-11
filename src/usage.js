@@ -22,14 +22,14 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	for (const u of usageStats) {
 		const vhost = u.vhost;
 		if (u.exchange) {
-			if (!index.exchange.get({ vhost, name: u.exchange })) {
+			if (!index.exchanges.get({ vhost, name: u.exchange })) {
 				console.warn(`Warning: Used but missing exchange "${u.exchange}"" in "${vhost}"`);
 			}
-			if (!index.queue.get({ vhost, name: u.queue })) {
+			if (!index.queues.get({ vhost, name: u.queue })) {
 				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
 			}
 		} else if (u.queue) {
-			if (!index.queue.get({ vhost, name: u.queue })) {
+			if (!index.queues.get({ vhost, name: u.queue })) {
 				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
 			}
 		} else {
@@ -37,24 +37,24 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		}
 	}
 
-	const exchangeSizeBefore = index.exchange.size;
-	const queueSizeBefore = index.queue.size;
-	const vhostSizeBefore = index.vhost.size;
+	const exchangeSizeBefore = index.exchanges.size;
+	const queueSizeBefore = index.queues.size;
+	const vhostSizeBefore = index.vhosts.size;
 
 	for (const u of usageStats) {
 		const vhost = u.vhost;
-		index.vhost.delete({ name: vhost });
+		index.vhosts.delete({ name: vhost });
 		if (u.exchange) {
-			index.exchange.delete({ vhost, name: u.exchange });
-			index.queue.delete({ vhost, name: u.queue });
+			index.exchanges.delete({ vhost, name: u.exchange });
+			index.queues.delete({ vhost, name: u.queue });
 		} else if (u.queue) {
-			index.queue.delete({ vhost, name: u.queue });
+			index.queues.delete({ vhost, name: u.queue });
 		} else {
 			throw new Error('Unexpected usage record type');
 		}
 	}
 
-	const vhostUnused = index.vhost.all();
+	const vhostUnused = index.vhosts.all();
 	if (vhostSizeBefore > 1 && vhostUnused.length) {
 		for (const i of vhostUnused) {
 			console.warn(`Warning: Empirically unused vhost "${i.name}"`);
@@ -66,7 +66,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		}
 	}
 
-	const exchangeUnused = index.exchange.all();
+	const exchangeUnused = index.exchanges.all();
 	if (exchangeSizeBefore && exchangeUnused.length) {
 		for (const i of exchangeUnused) {
 			console.warn(`Warning: Empirically unused exchange "${i.name}" in "${i.vhost}"`);
@@ -78,7 +78,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		}
 	}
 
-	const queueUnused = index.queue.all();
+	const queueUnused = index.queues.all();
 	if (queueSizeBefore && queueUnused.length) {
 		for (const i of queueUnused) {
 			console.warn(`Warning: Empirically unused queue "${i.name}" in "${i.vhost}"`);

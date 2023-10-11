@@ -37,7 +37,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether vhost is used anywhere
 	for (const vhost of definitions.vhosts) {
-		if (!index.resource.byVhost.get(vhost.name)) {
+		if (!index.resources.byVhost.get(vhost.name)) {
 			if (vhost.name) {
 				console.warn(`Warning: Unused vhost "${vhost.name}"`);
 			}
@@ -46,7 +46,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether queue is used anywhere: ? -> Q
 	for (const queue of definitions.queues) {
-		if (!index.binding.byDestination(queue)) {
+		if (!index.bindings.byDestination(queue)) {
 			if (queue.name && queue.vhost) {
 				console.warn(`Warning: Unbound queue "${queue.name}" in vhost "${queue.vhost}"`);
 			}
@@ -55,7 +55,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// test whether exchange is used anywhere: EX -> ? or ? -> EX
 	for (const exchange of definitions.exchanges) {
-		if (!index.binding.bySource(exchange) && !index.binding.byDestination(exchange)) {
+		if (!index.bindings.bySource(exchange) && !index.bindings.byDestination(exchange)) {
 			if (exchange.name && exchange.vhost) {
 				console.warn(`Warning: Unbound exchange "${exchange.name}" in vhost "${exchange.vhost}"`);
 			}
@@ -64,23 +64,23 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 
 	// TODO: test this
 	// test if used vhosts exist
-	for (const [vhost, res] of index.resource.byVhost.entries()) {
-		assert.ok(index.vhost.get({ name: vhost }), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
+	for (const [vhost, res] of index.resources.byVhost.entries()) {
+		assert.ok(index.vhosts.get({ name: vhost }), `Missing vhost "${vhost}" used by ${formatResource(res[0])}${res.length > 1 ? ` and ${res.length - 1} other(s)` : ''}`);
 	}
 
 	// TODO: test this
-	for (const [/* key */, permission] of index.topicPermission) {
+	for (const [/* key */, permission] of index.topic_permissions) {
 		const { vhost, exchange: exchangeName, user } = permission;
 		if (exchangeName !== '') {
-			assert.ok(index.exchange.get({ vhost, name: exchangeName }), `Missing exchange "${exchangeName}" in vhost "${vhost}" used by topic permission for "${user}"`);
+			assert.ok(index.exchanges.get({ vhost, name: exchangeName }), `Missing exchange "${exchangeName}" in vhost "${vhost}" used by topic permission for "${user}"`);
 		}
-		assert.ok(index.user.get({ name: user }), `Missing user "${user}" used by topic permission for exchange "${exchangeName}"`);
+		assert.ok(index.users.get({ name: user }), `Missing user "${user}" used by topic permission for exchange "${exchangeName}"`);
 	}
 
 	// TODO: test this
-	for (const [/* key */, permission] of index.permission) {
+	for (const [/* key */, permission] of index.permissions) {
 		const { vhost, user } = permission;
-		assert.ok(index.user.get({ name: user }), `Missing user "${user}" that has permissions set for vhost "${vhost}"`);
+		assert.ok(index.users.get({ name: user }), `Missing user "${user}" that has permissions set for vhost "${vhost}"`);
 	}
 
 	return [...indexingFailures, ...assert.collectFailures()];

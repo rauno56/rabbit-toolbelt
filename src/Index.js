@@ -16,6 +16,11 @@ const pushToMapOfArrays = (map, key, item) => {
 	}
 };
 
+const destinationTypeToIndex = {
+	queue: 'queues',
+	exchange: 'exchanges',
+};
+
 export const detectResourceType = (resource) => {
 	if (typeof resource.destination_type === 'string') {
 		return 'bindings';
@@ -92,12 +97,16 @@ export const key = {
 // A quick index to be able to quickly see which resources we've seen without the need to iterate through all
 // of them every time.
 class Index {
-	vhost = null;
 	queue = null;
-	exchange = null;
-	binding = null;
-	user = null;
-	resource = null;
+
+	vhosts = null;
+	queues = null;
+	exchanges = null;
+	bindings = null;
+	users = null;
+	permissions = null;
+	topic_permissions = null;
+	resources = null;
 
 	static fromDefinitions(definitions, throwOnFirstError) {
 		const index = new Index();
@@ -127,14 +136,14 @@ class Index {
 
 			pushToMapOfArrays(resourceByVhost, item.vhost, item);
 
-			const source = maps.exchange.get({
+			const source = maps.exchanges.get({
 				vhost: item.vhost,
 				name: item.source,
 			});
 			if (source) {
 				pushToMapOfArrays(bindingBySource, key.resource(source), item);
 			}
-			const destination = maps[item.destination_type].get({
+			const destination = maps[destinationTypeToIndex[item.destination_type]].get({
 				vhost: item.vhost,
 				name: item.destination,
 			});
@@ -150,14 +159,14 @@ class Index {
 		};
 
 		const maps = {
-			vhost: new HashSet(key.vhosts),
-			queue: new HashSet(key.queues, pushToResourceByVhost),
-			exchange: new HashSet(key.exchanges, pushToResourceByVhost),
-			binding: bindingSet,
-			user: new HashSet(key.users),
-			permission: new HashSet(key.permissions, pushToResourceByVhost),
-			topicPermission: new HashSet(key.topic_permissions, pushToResourceByVhost),
-			resource: {
+			vhosts: new HashSet(key.vhosts),
+			queues: new HashSet(key.queues, pushToResourceByVhost),
+			exchanges: new HashSet(key.exchanges, pushToResourceByVhost),
+			bindings: bindingSet,
+			users: new HashSet(key.users),
+			permissions: new HashSet(key.permissions, pushToResourceByVhost),
+			topic_permissions: new HashSet(key.topic_permissions, pushToResourceByVhost),
+			resources: {
 				get byVhost() { return resourceByVhost; },
 			},
 		};
@@ -178,8 +187,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.vhost.get(vhost), `Duplicate vhost: "${vhost.name}"`);
-			this.vhost.add(vhost);
+			assert.ok(!this.vhosts.get(vhost), `Duplicate vhost: "${vhost.name}"`);
+			this.vhosts.add(vhost);
 		}
 
 		for (const queue of definitions.queues) {
@@ -187,8 +196,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.queue.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
-			this.queue.add(queue);
+			assert.ok(!this.queues.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
+			this.queues.add(queue);
 		}
 
 		for (const exchange of definitions.exchanges) {
@@ -196,16 +205,16 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.exchange.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
-			this.exchange.add(exchange);
+			assert.ok(!this.exchanges.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
+			this.exchanges.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
 			const { vhost } = binding;
-			const from = this.exchange.get({ vhost, name: binding.source });
+			const from = this.exchanges.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
-			const to = this[binding.destination_type].get({ vhost, name: binding.destination });
+			const to = this[destinationTypeToIndex[binding.destination_type]].get({ vhost, name: binding.destination });
 			assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
 
 			if (from) {
@@ -223,8 +232,8 @@ class Index {
 				}
 			}
 
-			assert.ok(!this.binding.get(binding), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
-			this.binding.add(binding);
+			assert.ok(!this.bindings.get(binding), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
+			this.bindings.add(binding);
 		}
 
 		for (const user of definitions.users) {
@@ -233,8 +242,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.user.get(user), `Duplicate user: "${name}"`);
-			this.user.add(user);
+			assert.ok(!this.users.get(user), `Duplicate user: "${name}"`);
+			this.users.add(user);
 		}
 
 		for (const permission of definitions.permissions) {
@@ -243,8 +252,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.permission.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
-			this.permission.add(permission);
+			assert.ok(!this.permissions.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
+			this.permissions.add(permission);
 		}
 
 		for (const permission of definitions.topic_permissions) {
@@ -253,8 +262,8 @@ class Index {
 				// will not report failure because it'd already be caught by the structural validation
 				continue;
 			}
-			assert.ok(!this.topicPermission.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topicPermission.get(permission))}"`);
-			this.topicPermission.add(permission);
+			assert.ok(!this.topic_permissions.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topic_permissions.get(permission))}"`);
+			this.topic_permissions.add(permission);
 		}
 
 		return assert.collectFailures();
