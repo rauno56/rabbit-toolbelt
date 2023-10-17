@@ -88,18 +88,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
 	}
 
-	const permissionDiffCount = Object.entries(changes)
-		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
-	if (permissionDiffCount) {
-		console.warn('Deploying permissions is not yet supported');
-	}
-
-	const topicPermissionDiffCount = Object.entries(changes)
-		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
-	if (topicPermissionDiffCount) {
-		console.warn('Deploying topic permissions is not yet supported');
-	}
-
 	await deployResources(client, changes, 'changed', 'users');
 	await deployResources(client, changes, 'changed', 'permissions');
 	await deployResources(client, changes, 'changed', 'topic_permissions');
