@@ -72,13 +72,14 @@ const deployResources = async (client, changes, operation, type, operationOverri
 
 const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false }) => {
 	if (dryRun) {
-		console.warn('Warning: Dry run is enabled. No changed will actually be made to the server.');
+		console.warn('Warning: Dry run is enabled. No changes will be applied.');
 	}
 	const client = new RabbitClient(serverBaseUrl, { dryRun });
 	const changes = await diffServer(client, definitions);
 
+	const mutableResources = ['users', 'permissions', 'topic_permissions'];
 	const changedResourceCount = Object.entries(changes.changed)
-		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
+		.reduce((acc, [type, list]) => acc + (mutableResources.includes(type) ? 0 : list.length), 0);
 
 	if (noDeletions && recreateChanged) {
 		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
