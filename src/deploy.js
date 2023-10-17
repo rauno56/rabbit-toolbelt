@@ -12,6 +12,8 @@ const C = {
 		queues: (r) => ['PUT', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		exchanges: (r) => ['PUT', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		bindings: (r) => ['POST', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${r.destination}`],
+		permissions: (r) => ['PUT', `/api/permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
+		'topic-permissions': (r) => ['PUT', `/api/topic-permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
 	},
 	deleted: {
 		vhosts: (r) => ['DELETE', `/api/vhosts/${encodeURIComponent(r.name)}`],
@@ -19,9 +21,13 @@ const C = {
 		queues: (r) => ['DELETE', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		exchanges: (r) => ['DELETE', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		bindings: (r) => ['DELETE', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${encodeURIComponent(r.destination)}/${encodeURIComponent(r.properties_key || '~')}`],
+		permissions: (r) => ['DELETE', `/api/permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
+		'topic-permissions': (r) => ['DELETE', `/api/topic-permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
 	},
 	changed: {
 		users: (r) => ['PUT', `/api/users/${encodeURIComponent(r.name)}`],
+		permissions: (r) => ['PUT', `/api/permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
+		'topic-permissions': (r) => ['PUT', `/api/topic-permissions/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.user)}`],
 	},
 };
 
