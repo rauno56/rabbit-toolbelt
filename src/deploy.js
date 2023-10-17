@@ -20,6 +20,9 @@ const C = {
 		exchanges: (r) => ['DELETE', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
 		bindings: (r) => ['DELETE', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${encodeURIComponent(r.destination)}/${encodeURIComponent(r.properties_key || '~')}`],
 	},
+	changed: {
+		users: (r) => ['PUT', `/api/users/${encodeURIComponent(r.name)}`],
+	},
 };
 
 const deployResources = async (client, changes, operation, type, operationOverride = null) => {
@@ -43,7 +46,7 @@ const deployResources = async (client, changes, operation, type, operationOverri
 		const failed = result.filter(({ status }) => status !== 'fulfilled');
 		const failedNotice = result.length !== succeeded.length && `, ${result.length - succeeded.length} failed` || '';
 
-		if (operation === 'changed') {
+		if (operation === 'changed' && operationOverride) {
 			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
 		} else {
 			console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
@@ -72,19 +75,19 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
 	}
 
-	if (changes.changed.users.length) {
-		console.warn('Changing users is not yet supported');
-	}
 	const permissionDiffCount = Object.entries(changes)
 		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
 	if (permissionDiffCount) {
 		console.warn('Deploying permissions is not yet supported');
 	}
+
 	const topicPermissionDiffCount = Object.entries(changes)
 		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
 	if (topicPermissionDiffCount) {
 		console.warn('Deploying topic permissions is not yet supported');
 	}
+
+	await deployResources(client, changes, 'changed', 'users');
 
 	if (recreateChanged) {
 		// Delete changed resources
@@ -92,7 +95,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
-		// await deployResources(client, changes, 'changed', 'users', 'deleted');
 	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
@@ -107,7 +109,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
-		// await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
 	const deletedResourceCount = Object.entries(changes.deleted)
