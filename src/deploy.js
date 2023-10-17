@@ -56,6 +56,9 @@ const deployResources = async (client, changes, operation, type, operationOverri
 };
 
 const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false }) => {
+	if (dryRun) {
+		console.warn('Warning: Dry run is enabled. No changed will actually be made to the server.');
+	}
 	const client = new RabbitClient(serverBaseUrl, { dryRun });
 	const changes = await diffServer(client, definitions);
 
