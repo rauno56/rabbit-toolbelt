@@ -63,7 +63,7 @@ class RabbitClient {
 	}
 
 	request(method, path, body) {
-		// only do GET requests if dry run is requested
+		// only do GET requests if dry run is enabled
 		if (this.dryRun && method !== 'GET') {
 			return Promise.resolve({
 				url: new URL(path, this.baseUrl).toString(),

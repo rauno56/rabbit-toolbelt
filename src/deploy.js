@@ -1,24 +1,39 @@
 import RabbitClient from './RabbitClient.js';
 import { diffServer } from './deploy.utils.js';
 
+// automatically url-encode template string variables
+const url = (strs, ...values) => {
+	const escapedValues = values.map(encodeURIComponent);
+	return escapedValues.map((val, idx) => strs[idx] + val).join('') + strs[strs.length - 1];
+};
+
 const T = {
 	exchange: 'e',
 	queue: 'q',
 };
 const C = {
 	added: {
-		vhosts: (r) => ['PUT', `/api/vhosts/${encodeURIComponent(r.name)}`],
-		users: (r) => ['PUT', `/api/users/${encodeURIComponent(r.name)}`],
-		queues: (r) => ['PUT', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
-		exchanges: (r) => ['PUT', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
-		bindings: (r) => ['POST', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${r.destination}`],
+		vhosts: (r) => ['PUT', url`/api/vhosts/${r.name}`],
+		users: (r) => ['PUT', url`/api/users/${r.name}`],
+		queues: (r) => ['PUT', url`/api/queues/${r.vhost}/${r.name}`],
+		exchanges: (r) => ['PUT', url`/api/exchanges/${r.vhost}/${r.name}`],
+		bindings: (r) => ['POST', url`/api/bindings/${r.vhost}/e/${r.source}/${T[r.destination_type]}/${r.destination}`],
+		permissions: (r) => ['PUT', url`/api/permissions/${r.vhost}/${r.user}`],
+		topic_permissions: (r) => ['PUT', url`/api/topic-permissions/${r.vhost}/${r.user}`],
 	},
 	deleted: {
-		vhosts: (r) => ['DELETE', `/api/vhosts/${encodeURIComponent(r.name)}`],
-		users: (r) => ['DELETE', `/api/users/${encodeURIComponent(r.name)}`],
-		queues: (r) => ['DELETE', `/api/queues/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
-		exchanges: (r) => ['DELETE', `/api/exchanges/${encodeURIComponent(r.vhost)}/${encodeURIComponent(r.name)}`],
-		bindings: (r) => ['DELETE', `/api/bindings/${encodeURIComponent(r.vhost)}/e/${encodeURIComponent(r.source)}/${T[r.destination_type]}/${encodeURIComponent(r.destination)}/${encodeURIComponent(r.properties_key || '~')}`],
+		vhosts: (r) => ['DELETE', url`/api/vhosts/${r.name}`],
+		users: (r) => ['DELETE', url`/api/users/${r.name}`],
+		queues: (r) => ['DELETE', url`/api/queues/${r.vhost}/${r.name}`],
+		exchanges: (r) => ['DELETE', url`/api/exchanges/${r.vhost}/${r.name}`],
+		bindings: (r) => ['DELETE', url`/api/bindings/${r.vhost}/e/${r.source}/${T[r.destination_type]}/${r.destination}/${r.properties_key || '~'}`],
+		permissions: (r) => ['DELETE', url`/api/permissions/${r.vhost}/${r.user}`],
+		topic_permissions: (r) => ['DELETE', url`/api/topic-permissions/${r.vhost}/${r.user}`],
+	},
+	changed: {
+		users: (r) => ['PUT', url`/api/users/${r.name}`],
+		permissions: (r) => ['PUT', url`/api/permissions/${r.vhost}/${r.user}`],
+		topic_permissions: (r) => ['PUT', url`/api/topic-permissions/${r.vhost}/${r.user}`],
 	},
 };
 
@@ -43,7 +58,7 @@ const deployResources = async (client, changes, operation, type, operationOverri
 		const failed = result.filter(({ status }) => status !== 'fulfilled');
 		const failedNotice = result.length !== succeeded.length && `, ${result.length - succeeded.length} failed` || '';
 
-		if (operation === 'changed') {
+		if (operation === 'changed' && operationOverride) {
 			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
 		} else {
 			console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
@@ -56,11 +71,15 @@ const deployResources = async (client, changes, operation, type, operationOverri
 };
 
 const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false }) => {
+	if (dryRun) {
+		console.warn('Warning: Dry run is enabled. No changes will be applied.');
+	}
 	const client = new RabbitClient(serverBaseUrl, { dryRun });
 	const changes = await diffServer(client, definitions);
 
+	const mutableResources = ['users', 'permissions', 'topic_permissions'];
 	const changedResourceCount = Object.entries(changes.changed)
-		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
+		.reduce((acc, [type, list]) => acc + (mutableResources.includes(type) ? 0 : list.length), 0);
 
 	if (noDeletions && recreateChanged) {
 		throw new Error('Option conflict: --no-deletions and --recreate-changed both enabled.');
@@ -69,19 +88,21 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
 	}
 
-	if (changes.changed.users.length) {
-		console.warn('Changing users is not yet supported');
-	}
 	const permissionDiffCount = Object.entries(changes)
 		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
 	if (permissionDiffCount) {
 		console.warn('Deploying permissions is not yet supported');
 	}
+
 	const topicPermissionDiffCount = Object.entries(changes)
 		.reduce((acc, [/* op */, resourceMap]) => acc + resourceMap.permissions.length, 0);
 	if (topicPermissionDiffCount) {
 		console.warn('Deploying topic permissions is not yet supported');
 	}
+
+	await deployResources(client, changes, 'changed', 'users');
+	await deployResources(client, changes, 'changed', 'permissions');
+	await deployResources(client, changes, 'changed', 'topic_permissions');
 
 	if (recreateChanged) {
 		// Delete changed resources
@@ -89,7 +110,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
-		// await deployResources(client, changes, 'changed', 'users', 'deleted');
 	}
 
 	await deployResources(client, changes, 'added', 'vhosts');
@@ -97,6 +117,8 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	await deployResources(client, changes, 'added', 'queues');
 	await deployResources(client, changes, 'added', 'bindings');
 	await deployResources(client, changes, 'added', 'users');
+	await deployResources(client, changes, 'added', 'permissions');
+	await deployResources(client, changes, 'added', 'topic_permissions');
 
 	if (recreateChanged) {
 		// Recreate changed resources
@@ -104,7 +126,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
-		// await deployResources(client, changes, 'changed', 'users', 'added');
 	}
 
 	const deletedResourceCount = Object.entries(changes.deleted)
@@ -115,6 +136,8 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'deleted', 'exchanges');
 		await deployResources(client, changes, 'deleted', 'vhosts');
 		await deployResources(client, changes, 'deleted', 'users');
+		await deployResources(client, changes, 'deleted', 'permissions');
+		await deployResources(client, changes, 'deleted', 'topic_permissions');
 	} else {
 		if (deletedResourceCount) {
 			console.warn(`Ignored ${deletedResourceCount} deleted resource(s). Remove --no-deletions to remove deleted resources from server.`);

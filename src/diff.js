@@ -42,7 +42,7 @@ const makeChangeMap = () => {
 		bindings: [],
 		users: [],
 		permissions: [],
-		topicPermissions: [],
+		topic_permissions: [],
 	};
 };
 
@@ -67,7 +67,7 @@ const diff = (beforeDef, afterDef) => {
 	collectDiff('bindings', before.bindings, after.bindings);
 	collectDiff('users', before.users, after.users);
 	collectDiff('permissions', before.permissions, after.permissions);
-	collectDiff('topicPermissions', before.topic_permissions, after.topic_permissions);
+	collectDiff('topic_permissions', before.topic_permissions, after.topic_permissions);
 
 	return {
 		added,

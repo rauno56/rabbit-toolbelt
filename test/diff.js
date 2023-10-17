@@ -127,7 +127,7 @@ describe('diff', () => {
 		});
 		const changedItem = after.topic_permissions[0];
 		changedItem.write = '';
-		const { added: { topicPermissions: added }, deleted: { topicPermissions: deleted }, changed: { topicPermissions: changed } } = diff(before, after);
+		const { added: { topic_permissions: added }, deleted: { topic_permissions: deleted }, changed: { topic_permissions: changed } } = diff(before, after);
 		assert.equal(added.length, 1);
 		assert.equal(added[0].user, 'new');
 		assert.equal(deleted.length, 1);
