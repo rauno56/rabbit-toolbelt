@@ -7,15 +7,21 @@ import Failure from './Failure.js';
 
 export * from './structure.js';
 
+const tryCollect = (fn) => {
+	try {
+		return fn() || [];
+	} catch (err) {
+		return [err];
+	}
+};
+
 export const validateAll = (definitions, usageStats) => {
 	printInfo(definitions);
 
 	return [
-		...Failure.arrayFromSuperstructError(
-			validateRootStructure(definitions)
-		),
-		...validateRelations(definitions),
-		...(usageStats && validateUsage(definitions, usageStats) || []),
+		...(tryCollect(() => Failure.arrayFromSuperstructError(validateRootStructure(definitions)))),
+		...(tryCollect(() => validateRelations(definitions))),
+		...(tryCollect(() => usageStats && validateUsage(definitions, usageStats))),
 	];
 };
 
