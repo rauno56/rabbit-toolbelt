@@ -7,17 +7,7 @@ import Failure from './Failure.js';
 
 export * from './structure.js';
 
-// validateUsage if usageStatsPath is set
-const condValidateUsage = (definitions, usageStatsPath) => {
-	if (usageStatsPath && typeof usageStatsPath === 'string') {
-		return validateUsage(definitions, readJSONSync(usageStatsPath));
-	}
-	return [];
-};
-
-const validateFromFile = (path, usageStatsPath) => {
-	const definitions = readJSONSync(path);
-
+export const validateAll = (definitions, usageStats) => {
 	printInfo(definitions);
 
 	return [
@@ -25,8 +15,15 @@ const validateFromFile = (path, usageStatsPath) => {
 			validateRootStructure(definitions)
 		),
 		...validateRelations(definitions),
-		...condValidateUsage(definitions, usageStatsPath),
+		...(usageStats && validateUsage(definitions, usageStats) || []),
 	];
 };
 
-export default validateFromFile;
+const validateAllFromFile = (path, usageStatsPath) => {
+	const definitions = readJSONSync(path);
+	const usageStats = usageStatsPath && typeof usageStatsPath === 'string' ? readJSONSync(usageStatsPath) : null;
+
+	return validateAll(definitions, usageStats);
+};
+
+export default validateAllFromFile;
