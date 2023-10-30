@@ -43,7 +43,7 @@ export const detectResourceType = (resource) => {
 	if (typeof resource.write === 'string') {
 		return 'topic_permissions';
 	}
-	const err = new Error('Unknown resource');
+	const err = new Error(`Unknown resource: ${JSON.stringify(resource)}`);
 	err.context = resource;
 	throw err;
 };
@@ -183,33 +183,26 @@ class Index {
 		const assert = failureCollector(throwOnFirstError);
 
 		for (const vhost of definitions.vhosts) {
-			if (!vhost.name) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
+			// will not report failure because it'd already be caught by the structural validation
+			try { this.vhosts.hash(vhost); } catch { continue; }
 			assert.ok(!this.vhosts.get(vhost), `Duplicate vhost: "${vhost.name}"`);
 			this.vhosts.add(vhost);
 		}
 
 		for (const queue of definitions.queues) {
-			if (!queue.name || !queue.vhost) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
+			try { this.queues.hash(queue); } catch { continue; }
 			assert.ok(!this.queues.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queues.add(queue);
 		}
 
 		for (const exchange of definitions.exchanges) {
-			if (!exchange.name || !exchange.vhost) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
+			try { this.exchanges.hash(exchange); } catch { continue; }
 			assert.ok(!this.exchanges.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchanges.add(exchange);
 		}
 
 		for (const binding of definitions.bindings) {
+			try { this.bindings.hash(binding); } catch { continue; }
 			const { vhost } = binding;
 			const from = this.exchanges.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
@@ -237,31 +230,22 @@ class Index {
 		}
 
 		for (const user of definitions.users) {
+			try { this.users.hash(user); } catch { continue; }
 			const { name } = user;
-			if (!name) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
 			assert.ok(!this.users.get(user), `Duplicate user: "${name}"`);
 			this.users.add(user);
 		}
 
 		for (const permission of definitions.permissions) {
+			try { this.permissions.hash(permission); } catch { continue; }
 			const { user, vhost } = permission;
-			if (!user || !vhost) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
 			assert.ok(!this.permissions.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
 			this.permissions.add(permission);
 		}
 
 		for (const permission of definitions.topic_permissions) {
+			try { this.topic_permissions.hash(permission); } catch { continue; }
 			const { user, vhost } = permission;
-			if (!user || !vhost) {
-				// will not report failure because it'd already be caught by the structural validation
-				continue;
-			}
 			assert.ok(!this.topic_permissions.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topic_permissions.get(permission))}"`);
 			this.topic_permissions.add(permission);
 		}

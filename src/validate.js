@@ -7,26 +7,29 @@ import Failure from './Failure.js';
 
 export * from './structure.js';
 
-// validateUsage if usageStatsPath is set
-const condValidateUsage = (definitions, usageStatsPath) => {
-	if (usageStatsPath && typeof usageStatsPath === 'string') {
-		return validateUsage(definitions, readJSONSync(usageStatsPath));
+const tryCollect = (fn) => {
+	try {
+		return fn() || [];
+	} catch (err) {
+		return [err];
 	}
-	return [];
 };
 
-const validateFromFile = (path, usageStatsPath) => {
-	const definitions = readJSONSync(path);
-
+export const validateAll = (definitions, usageStats) => {
 	printInfo(definitions);
 
 	return [
-		...Failure.arrayFromSuperstructError(
-			validateRootStructure(definitions)
-		),
-		...validateRelations(definitions),
-		...condValidateUsage(definitions, usageStatsPath),
+		...(tryCollect(() => Failure.arrayFromSuperstructError(validateRootStructure(definitions)))),
+		...(tryCollect(() => validateRelations(definitions))),
+		...(tryCollect(() => usageStats && validateUsage(definitions, usageStats))),
 	];
 };
 
-export default validateFromFile;
+const validateAllFromFile = (path, usageStatsPath) => {
+	const definitions = readJSONSync(path);
+	const usageStats = usageStatsPath && typeof usageStatsPath === 'string' ? readJSONSync(usageStatsPath) : null;
+
+	return validateAll(definitions, usageStats);
+};
+
+export default validateAllFromFile;

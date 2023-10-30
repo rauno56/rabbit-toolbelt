@@ -1,7 +1,8 @@
 import { strict as assert } from 'assert';
 import { describe, it } from 'node:test';
 
-import { assertRootStructure, assertPart, assertFromFile } from '../src/validate.js';
+import { readJSONSync } from '../src/utils.js';
+import { assertRootStructure, assertPart, assertFromFile, validateAll } from '../src/validate.js';
 
 describe('assertFromFile', () => {
 	it('empty', () => {
@@ -63,5 +64,15 @@ describe('invalid strings', () => {
 				name: 'user.​name',
 			}]);
 		}, /unexpected char/);
+	});
+});
+
+describe('validateAll', () => {
+	it('reports structural errors if hash functions throw', () => {
+		const valid = readJSONSync('./fixtures/full.json');
+		valid.topic_permissions.push(valid.permissions[0]);
+		const failures = validateAll(valid);
+		console.log(failures);
+		assert.equal(failures.length, 2);
 	});
 });
