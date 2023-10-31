@@ -23,14 +23,14 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		const vhost = u.vhost;
 		if (u.exchange) {
 			if (!index.exchanges.get({ vhost, name: u.exchange })) {
-				console.warn(`Warning: Used but missing exchange "${u.exchange}" in "${vhost}"`);
+				console.warn(`Warning(usage): Empirically used but missing exchange "${u.exchange}" in "${vhost}"`);
 			}
 			if (!index.queues.get({ vhost, name: u.queue })) {
-				console.warn(`Warning: Used but missing queue "${u.queue}" in "${vhost}"`);
+				console.warn(`Warning(usage): Empirically used but missing queue "${u.queue}" in "${vhost}"`);
 			}
 		} else if (u.queue) {
 			if (!index.queues.get({ vhost, name: u.queue })) {
-				console.warn(`Warning: Used but missing queue "${u.queue}" in "${vhost}"`);
+				console.warn(`Warning(usage): Empirically used but missing queue "${u.queue}" in "${vhost}"`);
 			}
 		} else {
 			throw new Error('Unexpected usage record type');
@@ -57,7 +57,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const vhostUnused = index.vhosts.all();
 	if (vhostSizeBefore > 1 && vhostUnused.length) {
 		for (const i of vhostUnused) {
-			console.warn(`Warning: Empirically unused vhost "${i.name}"`);
+			console.warn(`Warning(usage): Empirically unused vhost "${i.name}"`);
 		}
 		const vhostRatio = vhostUnused.length / vhostSizeBefore;
 		if (assert.ok(vhostRatio < C.unusedFailureThreshold.vhost, `High ratio of unused vhosts: ${formatPercentage(vhostRatio)}`)) {
@@ -69,7 +69,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const exchangeUnused = index.exchanges.all();
 	if (exchangeSizeBefore && exchangeUnused.length) {
 		for (const i of exchangeUnused) {
-			console.warn(`Warning: Empirically unused exchange "${i.name}" in "${i.vhost}"`);
+			console.warn(`Warning(usage): Empirically unused exchange "${i.name}" in "${i.vhost}"`);
 		}
 		const exchangeRatio = exchangeUnused.length / exchangeSizeBefore;
 		if (assert.ok(exchangeRatio < C.unusedFailureThreshold.exchange, `High ratio of unused exchanges: ${formatPercentage(exchangeRatio)}`)) {
@@ -81,7 +81,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 	const queueUnused = index.queues.all();
 	if (queueSizeBefore && queueUnused.length) {
 		for (const i of queueUnused) {
-			console.warn(`Warning: Empirically unused queue "${i.name}" in "${i.vhost}"`);
+			console.warn(`Warning(usage): Empirically unused queue "${i.name}" in "${i.vhost}"`);
 		}
 		const queueRatio = queueUnused.length / queueSizeBefore;
 		if (assert.ok(queueRatio < C.unusedFailureThreshold.queue, `High ratio of unused queues: ${formatPercentage(queueRatio)}`)) {
