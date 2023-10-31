@@ -23,14 +23,14 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		const vhost = u.vhost;
 		if (u.exchange) {
 			if (!index.exchanges.get({ vhost, name: u.exchange })) {
-				console.warn(`Warning: Used but missing exchange "${u.exchange}"" in "${vhost}"`);
+				console.warn(`Warning: Used but missing exchange "${u.exchange}" in "${vhost}"`);
 			}
 			if (!index.queues.get({ vhost, name: u.queue })) {
-				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
+				console.warn(`Warning: Used but missing queue "${u.queue}" in "${vhost}"`);
 			}
 		} else if (u.queue) {
 			if (!index.queues.get({ vhost, name: u.queue })) {
-				console.warn(`Warning: Used but missing queue "${u.queue}"" in "${vhost}"`);
+				console.warn(`Warning: Used but missing queue "${u.queue}" in "${vhost}"`);
 			}
 		} else {
 			throw new Error('Unexpected usage record type');
