@@ -127,13 +127,13 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	const deletedResourceCount = Object.entries(changes.deleted)
 		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
 	if (!noDeletions) {
+		await deployResources(client, changes, 'deleted', 'topic_permissions');
+		await deployResources(client, changes, 'deleted', 'permissions');
+		await deployResources(client, changes, 'deleted', 'users');
 		await deployResources(client, changes, 'deleted', 'bindings');
 		await deployResources(client, changes, 'deleted', 'queues');
 		await deployResources(client, changes, 'deleted', 'exchanges');
 		await deployResources(client, changes, 'deleted', 'vhosts');
-		await deployResources(client, changes, 'deleted', 'users');
-		await deployResources(client, changes, 'deleted', 'permissions');
-		await deployResources(client, changes, 'deleted', 'topic_permissions');
 	} else {
 		if (deletedResourceCount) {
 			console.warn(`Ignored ${deletedResourceCount} deleted resource(s). Remove --no-deletions to remove deleted resources from server.`);
