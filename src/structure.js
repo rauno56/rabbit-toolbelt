@@ -106,7 +106,7 @@ const rootStructure = {
 		{
 			name: normalString(),
 			vhost: normalString(),
-			type: enums(['topic', 'headers', 'direct']),
+			type: enums(['topic', 'headers', 'direct', 'fanout']),
 			durable: boolean(),
 			auto_delete: boolean(),
 			internal: optional(boolean()),

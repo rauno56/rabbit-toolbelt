@@ -270,10 +270,14 @@ class Index {
 					assert.ok(!binding.routing_key, `Routing key is ignored for header exchanges, but set("${binding.routing_key}") for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
 				} else if (from.type === 'topic') {
 					// TODO: TEST THIS
-					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for topic exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
 				} else if (from.type === 'direct') {
 					// TODO: TEST THIS
-					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for direct exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+				} else if (from.type === 'fanout') {
+					// TODO: TEST THIS
+					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					assert.ok(!binding.routing_key, `Routing key is ignored for ${from.type} exchanges, but set("${binding.routing_key}") for binding from ${binding.source} to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
 				} else {
 					assert.fail(`Unexpected binding type: ${from.type}`);
 				}
