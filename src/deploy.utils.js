@@ -7,7 +7,7 @@ export const indexPropertiesKeyMap = (bindings) => {
 	}));
 };
 
-export const diffServer = async (client, definitions) => {
+export const diffServer = async (client, definitions, ignoreList) => {
 	const [
 		bindings,
 		current,
@@ -19,7 +19,7 @@ export const diffServer = async (client, definitions) => {
 		client.requestDefinitions(),
 	]);
 	const propertiesKeyMap = indexPropertiesKeyMap(bindings);
-	const changes = diff(current, definitions);
+	const changes = diff(current, definitions, ignoreList);
 
 	for (const b of changes['deleted']['bindings']) {
 		const bKey = key.bindings(b);

@@ -70,12 +70,12 @@ const deployResources = async (client, changes, operation, type, operationOverri
 	}
 };
 
-const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false }) => {
+const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions = false, recreateChanged = false, ignoreList = null }) => {
 	if (dryRun) {
 		console.warn('Warning: Dry run is enabled. No changes will be applied.');
 	}
 	const client = new RabbitClient(serverBaseUrl, { dryRun });
-	const changes = await diffServer(client, definitions);
+	const changes = await diffServer(client, definitions, ignoreList);
 
 	const mutableResources = ['users', 'permissions', 'topic_permissions'];
 	const changedResourceCount = Object.entries(changes.changed)

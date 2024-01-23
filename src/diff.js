@@ -46,9 +46,10 @@ const makeChangeMap = () => {
 	};
 };
 
-const diff = (beforeDef, afterDef) => {
-	const before = Index.fromDefinitions(beforeDef, false);
-	const after = Index.fromDefinitions(afterDef, false);
+const diff = (beforeDef, afterDef, ignoreList = null) => {
+	const ignoreIndex = Array.isArray(ignoreList) && ignoreList.length ? Index.fromIgnoreList(ignoreList) : null;
+	const before = Index.fromDefinitions(beforeDef, false, ignoreIndex);
+	const after = Index.fromDefinitions(afterDef, false, ignoreIndex);
 
 	const added = makeChangeMap();
 	const deleted = makeChangeMap();
