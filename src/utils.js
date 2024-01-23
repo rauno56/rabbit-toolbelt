@@ -7,6 +7,12 @@ export const readJSONSync = (path) => {
 	return JSON.parse(readFileSync(path, 'utf8'));
 };
 
+export const readIgnoreFileSync = (path) => {
+	return readFileSync(path, 'utf8')
+		.split(/[\r\n]+/)
+		.filter((line) => line && line.startsWith('/'));
+};
+
 export const getOpt = (option) => {
 	const index = process.argv.indexOf(option);
 	if (~index) {

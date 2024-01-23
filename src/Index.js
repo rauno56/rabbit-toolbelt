@@ -94,11 +94,34 @@ export const key = {
 	},
 };
 
+export const isIgnored = {
+	vhosts: (index, item) => {
+		return index.vhosts.has(item);
+	},
+	queues: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.queues.has(item);
+	},
+	exchanges: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.exchanges.has(item);
+	},
+	bindings: (index, item) => {
+		const { vhost } = item;
+		return index.vhosts.has({ name: item.vhost }) || index[destinationTypeToIndex[item.destination_type]].has({ vhost, name: item.destination }) || index.exchanges.has({ vhost, name: item.source });
+	},
+	users: (index, item) => {
+		return index.users.has(item);
+	},
+	permissions: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user });
+	},
+	topic_permissions: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user }) || index.exchanges.has({ vhost: item.vhost, name: item.exchange });
+	},
+};
+
 // A quick index to be able to quickly see which resources we've seen without the need to iterate through all
 // of them every time.
 class Index {
-	queue = null;
-
 	vhosts = null;
 	queues = null;
 	exchanges = null;
@@ -108,9 +131,36 @@ class Index {
 	topic_permissions = null;
 	resources = null;
 
-	static fromDefinitions(definitions, throwOnFirstError) {
+	static fromIgnoreList(ignoreList) {
 		const index = new Index();
-		index.build(definitions, throwOnFirstError);
+		/*
+			Using API-based paths:
+			/vhosts/{vhost}
+			/queues/{vhost}/{queue.name}
+			/exchanges/{vhost}/{exchange.name}
+			/users/{user.name}
+		*/
+		ignoreList
+			.map((row) => {
+				return row.split('/');
+			})
+			.forEach(([/* part before the first / */ , type, ...rargs]) => {
+				const args = rargs.map(decodeURIComponent);
+				if (type === 'vhosts' || type === 'users') {
+					return index[type].add({ name: args[0] });
+				}
+				if (type === 'queues' || type === 'exchanges') {
+					return index[type].add({ vhost: args[0], name: args[1] });
+				}
+				throw new Error(`Invalid type: "${type}"`);
+			});
+
+		return index;
+	}
+
+	static fromDefinitions(definitions, throwOnFirstError, ignoreIndex) {
+		const index = new Index();
+		index.build(definitions, throwOnFirstError, ignoreIndex);
 
 		return index;
 	}
@@ -176,7 +226,7 @@ class Index {
 		}
 	}
 
-	build(definitions, throwOnFirstError = true) {
+	build(definitions, throwOnFirstError = true, ignoreIndex = null) {
 		nodeAssert.ok(definitions && typeof definitions, 'object');
 		this.init();
 
@@ -185,18 +235,21 @@ class Index {
 		for (const vhost of definitions.vhosts) {
 			// will not report failure because it'd already be caught by the structural validation
 			try { this.vhosts.hash(vhost); } catch { continue; }
+			if (ignoreIndex && isIgnored.vhosts(ignoreIndex, vhost)) { continue; }
 			assert.ok(!this.vhosts.get(vhost), `Duplicate vhost: "${vhost.name}"`);
 			this.vhosts.add(vhost);
 		}
 
 		for (const queue of definitions.queues) {
 			try { this.queues.hash(queue); } catch { continue; }
+			if (ignoreIndex && isIgnored.queues(ignoreIndex, queue)) { continue; }
 			assert.ok(!this.queues.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
 			this.queues.add(queue);
 		}
 
 		for (const exchange of definitions.exchanges) {
 			try { this.exchanges.hash(exchange); } catch { continue; }
+			if (ignoreIndex && isIgnored.exchanges(ignoreIndex, exchange)) { continue; }
 			assert.ok(!this.exchanges.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
 			this.exchanges.add(exchange);
 		}
@@ -204,6 +257,7 @@ class Index {
 		for (const binding of definitions.bindings) {
 			try { this.bindings.hash(binding); } catch { continue; }
 			const { vhost } = binding;
+			if (ignoreIndex && isIgnored.bindings(ignoreIndex, binding)) { continue; }
 			const from = this.exchanges.get({ vhost, name: binding.source });
 			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
 
@@ -231,6 +285,7 @@ class Index {
 
 		for (const user of definitions.users) {
 			try { this.users.hash(user); } catch { continue; }
+			if (ignoreIndex && isIgnored.users(ignoreIndex, user)) { continue; }
 			const { name } = user;
 			assert.ok(!this.users.get(user), `Duplicate user: "${name}"`);
 			this.users.add(user);
@@ -238,6 +293,7 @@ class Index {
 
 		for (const permission of definitions.permissions) {
 			try { this.permissions.hash(permission); } catch { continue; }
+			if (ignoreIndex && isIgnored.permissions(ignoreIndex, permission)) { continue; }
 			const { user, vhost } = permission;
 			assert.ok(!this.permissions.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
 			this.permissions.add(permission);
@@ -245,6 +301,7 @@ class Index {
 
 		for (const permission of definitions.topic_permissions) {
 			try { this.topic_permissions.hash(permission); } catch { continue; }
+			if (ignoreIndex && isIgnored.topic_permissions(ignoreIndex, permission)) { continue; }
 			const { user, vhost } = permission;
 			assert.ok(!this.topic_permissions.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topic_permissions.get(permission))}"`);
 			this.topic_permissions.add(permission);

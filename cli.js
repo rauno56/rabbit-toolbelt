@@ -7,7 +7,7 @@ import { inspect } from 'node:util';
 import validate from './src/validate.js';
 import diff from './src/diff.js';
 import deploy from './src/deploy.js';
-import { getOpt, getOptValue, readJSONSync } from './src/utils.js';
+import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
@@ -19,6 +19,7 @@ const opts = {
 	noDeletions: getOpt('--no-deletions'),
 	dryRun: getOpt('--dry-run'),
 	recreateChanged: getOpt('--recreate-changed'),
+	ignoreFile: getOptValue('--ignore-file'),
 };
 
 const [,, subcommand, ...args] = process.argv;
@@ -46,19 +47,21 @@ if (
 	console.error('         Diffs two definition files or servers.');
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
-	console.error('         --json \t Output JSON to make parsing the result with another programm easier.');
-	console.error('         --limit\t Limit the number of each type of changes to show.');
+	console.error('         --ignore-file\tPath to ignore file.');
+	console.error('         --json       \tOutput JSON to make parsing the result with another programm easier.');
+	console.error('         --limit      \tLimit the number of changes to show for each type.');
 	console.error();
 	console.error('deploy <base url for a management API> <path/definitions.to.deploy.json>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
 	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('         Protocol is required to be http or https.');
 	console.error('         Options:');
-	console.error('         --dry-run          \tRun as configured but make all non-GET network calls no-op.');
-	console.error('         --no-deletions     \tNever delete any resources.');
-	console.error('         --recreate-changed \tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
-	console.error('                            \tBy default changes are not deployed, but this option turns it on.');
-	console.error('                            \tUse with caution because it will affect channels actively using those resources.');
+	console.error('         --dry-run         \tRun as configured but make all non-GET network calls no-op.');
+	console.error('         --ignore-file     \tPath to ignore file.');
+	console.error('         --no-deletions    \tNever delete any resources.');
+	console.error('         --recreate-changed\tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
+	console.error('                           \tBy default changes are not deployed, but this option turns it on.');
+	console.error('                           \tUse with caution because it will affect channels actively using those resources.');
 	process.exit(1);
 }
 
@@ -102,7 +105,8 @@ const commands = {
 			resolveDefinitions(afterInput),
 		]);
 
-		const result = diff(before, after);
+		const ignoreList = opts.ignoreFile ? readIgnoreFileSync(opts.ignoreFile) : null;
+		const result = diff(before, after, ignoreList);
 
 		if (opts.json) {
 			return console.log(JSON.stringify(result));
@@ -141,10 +145,12 @@ const commands = {
 			dryRun,
 		} = opts;
 
+		const ignoreList = opts.ignoreFile ? readIgnoreFileSync(opts.ignoreFile) : null;
+
 		return deploy(
 			new URL(serverBaseUrl),
 			readJSONSync(definitions),
-			{ dryRun, noDeletions, recreateChanged }
+			{ dryRun, noDeletions, recreateChanged, ignoreList }
 		);
 	},
 };
