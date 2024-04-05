@@ -72,7 +72,6 @@ describe('validateAll', () => {
 		const valid = readJSONSync('./fixtures/full.json');
 		valid.topic_permissions.push(valid.permissions[0]);
 		const failures = validateAll(valid);
-		console.log(failures);
 		assert.equal(failures.length, 2);
 	});
 });
