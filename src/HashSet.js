@@ -9,8 +9,14 @@ export class HashSet extends Map {
 		assert.equal(typeof hash, 'function');
 		this.hash = hash;
 		if (onAdd) {
-			assert.equal(typeof onAdd, 'function');
-			this.onAdd = onAdd;
+			if (typeof onAdd === 'function') {
+				this.onAdd = onAdd;
+			} else {
+				assert.equal(typeof onAdd[Symbol.iterator], 'function');
+				for (const item of onAdd) {
+					this.add(item);
+				}
+			}
 		}
 	}
 
