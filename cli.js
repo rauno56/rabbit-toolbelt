@@ -108,7 +108,7 @@ const commands = {
 		const ignoreList = opts.ignoreFile ? readIgnoreFileSync(opts.ignoreFile) : null;
 		const result = diff(before, after, ignoreList);
 
-		if (opts.json) {
+		if (opts.json || !process.stdout.isTTY) {
 			return console.log(JSON.stringify(result));
 		}
 
