@@ -12,16 +12,22 @@ import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync } 
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
-	json: getOpt('--json'),
+	/* general */
 	h: getOpt('-h'),
 	help: getOpt('--help'),
-	summary: getOpt('--summary'),
-	limit: parseInt(getOptValue('--limit')),
-	noDeletions: getOpt('--no-deletions'),
-	dryRun: getOpt('--dry-run'),
-	revert: getOpt('--revert'),
-	recreateChanged: getOpt('--recreate-changed'),
+	/* shared */
 	ignoreFile: getOptValue('--ignore-file'),
+	/* apply */
+	revert: getOpt('--revert'),
+	write: getOpt('--write'),
+	/* diff */
+	json: getOpt('--json'),
+	limit: parseInt(getOptValue('--limit')),
+	summary: getOpt('--summary'),
+	/* deploy */
+	dryRun: getOpt('--dry-run'),
+	noDeletions: getOpt('--no-deletions'),
+	recreateChanged: getOpt('--recreate-changed'),
 };
 
 const [,, subcommand, ...args] = process.argv;
@@ -58,14 +64,15 @@ if (
 	console.error('         --ignore-file\tPath to ignore file.');
 	console.error('         --json       \tOutput JSON to make parsing the result with another programm easier.');
 	console.error('         --limit      \tLimit the number of changes to show for each type.');
+	console.error('         --summary    \tOutput summary instead of the full list of differences.');
 	console.error();
 	console.error('deploy <base url for a management API> <path/definitions.to.deploy.json>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
 	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('         Protocol is required to be http or https.');
 	console.error('         Options:');
-	console.error('         --dry-run         \tRun as configured but make all non-GET network calls no-op.');
 	console.error('         --ignore-file     \tPath to ignore file.');
+	console.error('         --dry-run         \tRun as configured but make all non-GET network calls no-op.');
 	console.error('         --no-deletions    \tNever delete any resources.');
 	console.error('         --recreate-changed\tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
 	console.error('                           \tBy default changes are not deployed, but this option turns it on.');
