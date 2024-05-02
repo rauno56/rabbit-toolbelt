@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import url from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { inspect } from 'node:util';
 
 export const readJSONSync = (path) => {
 	return JSON.parse(readFileSync(path, 'utf8'));
+};
+
+export const writeJSONSync = (path, content) => {
+	return writeFileSync(path, JSON.stringify(content, null, 2));
 };
 
 export const readIgnoreFileSync = (path) => {
@@ -52,5 +57,12 @@ export const parseUrl = (input) => {
 	};
 };
 
-export const assertStr = (str, key) => assert.equal(typeof str, 'string', `Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`);
+export const assertStr = (str, key) => assert.equal(
+	typeof str, 'string',
+	`Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`
+);
+export const assertStrObj = (obj, key) => assert.equal(
+	typeof obj[key], 'string',
+	`Expected "${key}" on ${inspect(obj)} to be string: ${obj[key]}`
+);
 export const assertObj = (obj) => assert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
