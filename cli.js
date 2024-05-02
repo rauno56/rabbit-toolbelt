@@ -7,7 +7,8 @@ import { inspect } from 'node:util';
 import validate from './src/validate.js';
 import diff from './src/diff.js';
 import deploy from './src/deploy.js';
-import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync } from './src/utils.js';
+import apply from './src/apply.js';
+import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
@@ -18,6 +19,7 @@ const opts = {
 	limit: parseInt(getOptValue('--limit')),
 	noDeletions: getOpt('--no-deletions'),
 	dryRun: getOpt('--dry-run'),
+	revert: getOpt('--revert'),
 	recreateChanged: getOpt('--recreate-changed'),
 	ignoreFile: getOptValue('--ignore-file'),
 };
@@ -38,6 +40,12 @@ if (
 ) {
 	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
 	console.error('Commands:');
+	console.error();
+	console.error('apply <path/diff.json> <path/definitions.json>');
+	console.error('         Applies JSON diff to a definition file.');
+	console.error('         Options:');
+	console.error('         --revert\tRevert the direction of the diff. Useful when applying diffs to definition files to match them to servers.');
+	console.error('         --write\tWrite the result back to file diffed instead of writing to stdout.');
 	console.error();
 	console.error('validate <path/definitions.json> [<path/usage.json>]');
 	console.error('         Validates definition file.');
@@ -152,6 +160,21 @@ const commands = {
 			readJSONSync(definitions),
 			{ dryRun, noDeletions, recreateChanged, ignoreList }
 		);
+	},
+	apply: (diffPath, definitionsPath) => {
+		const { revert, write } = opts;
+
+		const diff = readJSONSync(diffPath);
+		const definitions = readJSONSync(definitionsPath);
+		const result = apply(diff, definitions, { revert });
+
+		if (write) {
+			writeJSONSync(result);
+		} else {
+			console.log(JSON.stringify(result, null, 2));
+		}
+
+		return result;
 	},
 };
 

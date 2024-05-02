@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import url from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { inspect } from 'node:util';
 
 export const readJSONSync = (path) => {
 	return JSON.parse(readFileSync(path, 'utf8'));
+};
+
+export const writeJSONSync = (path, content) => {
+	return writeFileSync(path, JSON.stringify(content, null, 2));
 };
 
 export const readIgnoreFileSync = (path) => {
