@@ -100,14 +100,6 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	await deployResources(client, changes, 'changed', 'permissions');
 	await deployResources(client, changes, 'changed', 'topic_permissions');
 
-	if (recreateChanged) {
-		// Delete changed resources
-		await deployResources(client, changes, 'changed', 'vhosts', 'deleted');
-		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
-		await deployResources(client, changes, 'changed', 'queues', 'deleted');
-		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
-	}
-
 	await deployResources(client, changes, 'added', 'vhosts');
 	await deployResources(client, changes, 'added', 'exchanges');
 	await deployResources(client, changes, 'added', 'queues');
@@ -118,9 +110,14 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 
 	if (recreateChanged) {
 		// Recreate changed resources
-		await deployResources(client, changes, 'changed', 'vhosts', 'added');
+		// vhosts can never change because name, the only property, is also a defining one
+		// await deployResources(client, changes, 'changed', 'vhosts', 'deleted');
+		// await deployResources(client, changes, 'changed', 'vhosts', 'added');
+		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
+		await deployResources(client, changes, 'changed', 'queues', 'deleted');
 		await deployResources(client, changes, 'changed', 'queues', 'added');
+		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
 	}
 
