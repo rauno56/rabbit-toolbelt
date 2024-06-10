@@ -96,23 +96,14 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		console.warn(`Ignoring ${changedResourceCount} changed resources, which need to be deleted and recreated. Provide --recreate-changed option to deploy changed resources.`);
 	}
 
-	await deployResources(client, changes, 'changed', 'users');
-	await deployResources(client, changes, 'changed', 'permissions');
-	await deployResources(client, changes, 'changed', 'topic_permissions');
-
 	await deployResources(client, changes, 'added', 'vhosts');
+
+	await deployResources(client, changes, 'added', 'users');
 	await deployResources(client, changes, 'added', 'exchanges');
 	await deployResources(client, changes, 'added', 'queues');
-	await deployResources(client, changes, 'added', 'bindings');
-	await deployResources(client, changes, 'added', 'users');
-	await deployResources(client, changes, 'added', 'permissions');
-	await deployResources(client, changes, 'added', 'topic_permissions');
 
+	await deployResources(client, changes, 'changed', 'users');
 	if (recreateChanged) {
-		// Recreate changed resources
-		// vhosts can never change because name, the only property, is also a defining one
-		// await deployResources(client, changes, 'changed', 'vhosts', 'deleted');
-		// await deployResources(client, changes, 'changed', 'vhosts', 'added');
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');
 		await deployResources(client, changes, 'changed', 'exchanges', 'added');
 		await deployResources(client, changes, 'changed', 'queues', 'deleted');
@@ -120,6 +111,12 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
 	}
+
+	await deployResources(client, changes, 'added', 'bindings');
+	await deployResources(client, changes, 'added', 'permissions');
+	await deployResources(client, changes, 'added', 'topic_permissions');
+	await deployResources(client, changes, 'changed', 'permissions');
+	await deployResources(client, changes, 'changed', 'topic_permissions');
 
 	const deletedResourceCount = Object.entries(changes.deleted)
 		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
