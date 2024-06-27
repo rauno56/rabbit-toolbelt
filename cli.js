@@ -15,6 +15,8 @@ const opts = {
 	/* general */
 	h: getOpt('-h'),
 	help: getOpt('--help'),
+	v: getOpt('-v'),
+	version: getOpt('--version'),
 	/* shared */
 	ignoreFile: getOptValue('--ignore-file'),
 	/* apply */
@@ -37,6 +39,12 @@ const unparsedOptions = args.filter((a) => a.startsWith('-'));
 if (unparsedOptions.length) {
 	console.error(`Unrecognized options: ${unparsedOptions.join(', ')}`);
 	process.exit(1);
+}
+
+if (opts.v || opts.version) {
+	const pkg = readJSONSync('./package.json');
+	console.error(`${pkg.name} ${pkg.version}`);
+	process.exit(0);
 }
 
 if (
