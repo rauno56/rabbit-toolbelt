@@ -24,6 +24,7 @@ const opts = {
 	write: getOpt('--write'),
 	/* diff */
 	json: getOpt('--json'),
+	pretty: getOpt('--pretty'),
 	limit: parseInt(getOptValue('--limit')),
 	summary: getOpt('--summary'),
 	/* deploy */
@@ -70,6 +71,7 @@ if (
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
 	console.error('         --ignore-file\tPath to ignore file.');
+	console.error('         --pretty     \tForce pretty-printed output.');
 	console.error('         --json       \tOutput JSON to make parsing the result with another programm easier.');
 	console.error('         --limit      \tLimit the number of changes to show for each type.');
 	console.error('         --summary    \tOutput summary instead of the full list of differences.');
@@ -87,6 +89,8 @@ if (
 	console.error('                           \tUse with caution because it will affect channels actively using those resources.');
 	process.exit(1);
 }
+
+assert(!opts.pretty || !opts.json, '--pretty and --json options are exclusive.');
 
 const commands = {
 	validate: (filePath, usageFilePath) => {
@@ -131,7 +135,7 @@ const commands = {
 		const ignoreList = opts.ignoreFile ? readIgnoreFileSync(opts.ignoreFile) : null;
 		const result = diff(before, after, ignoreList);
 
-		if (opts.json || !process.stdout.isTTY) {
+		if (!opts.pretty && (opts.json || !process.stdout.isTTY)) {
 			return console.log(JSON.stringify(result));
 		}
 
