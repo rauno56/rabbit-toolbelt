@@ -32,6 +32,17 @@ const normalString = () => refine(string(), 'normal string', (value) => {
 	}).join('');
 	return `A string with unexpected characters: "${normalized}" printed as "${value}"`;
 });
+const genPatternedValidator = (pattern) => {
+	if (!(pattern instanceof RegExp)) {
+		return normalString;
+	}
+	return () => refine(normalString(), 'patterned string', (value) => {
+		if (pattern.test(value)) {
+			return true;
+		}
+		return `Expected "${value}" to match ${pattern}`;
+	});
+};
 
 // root validator config. Extracted for partial validation.
 const rootStructure = {
@@ -40,14 +51,14 @@ const rootStructure = {
 	product_name: string(),
 	product_version: string(),
 	users: array(object({
-		name: normalString(),
+		name: genPatternedValidator(C.pattern.users)(),
 		password_hash: string(),
 		hashing_algorithm: string(),
 		tags: array(string()),
 		limits: object(),
 	})),
 	vhosts: array(object({
-		name: normalString(),
+		name: genPatternedValidator(C.pattern.vhosts)(),
 	})),
 	permissions: array(object({
 		user: normalString(),
@@ -75,14 +86,14 @@ const rootStructure = {
 	})),
 	policies: array(object({
 		vhost: normalString(),
-		name: normalString(),
+		name: genPatternedValidator(C.pattern.policies)(),
 		pattern: string(),
 		'apply-to': string(),
 		definition: object(),
 		priority: number(),
 	})),
 	queues: array(object({
-		name: normalString(),
+		name: genPatternedValidator(C.pattern.queues)(),
 		vhost: normalString(),
 		durable: boolean(),
 		auto_delete: boolean(),
@@ -104,7 +115,7 @@ const rootStructure = {
 	})),
 	exchanges: array(object(
 		{
-			name: normalString(),
+			name: genPatternedValidator(C.pattern.exchanges)(),
 			vhost: normalString(),
 			type: enums(['topic', 'headers', 'direct', 'fanout']),
 			durable: boolean(),
