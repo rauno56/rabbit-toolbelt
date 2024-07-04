@@ -37,7 +37,7 @@ const genPatternedValidator = (pattern) => {
 		return normalString;
 	}
 	return () => refine(normalString(), 'patterned string', (value) => {
-		if (pattern.test(value)) {
+		if (C.normalStringAllowList.includes(value) || pattern.test(value)) {
 			return true;
 		}
 		return `Expected "${value}" to match ${pattern}`;
