@@ -7,7 +7,7 @@
   "bin": "cli.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "tap ./test/*.js"
+    "test": "RABVAL_PATTERN_USERS='^(?!uu)' RABVAL_PATTERN='^(?!xx)' tap ./test/*.js"
   },
   "keywords": [
     "rabbit",

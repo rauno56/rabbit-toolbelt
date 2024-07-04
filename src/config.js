@@ -22,11 +22,33 @@ function getFloatFromEnv(envVar, defaultValue) {
 	return parseFloat(process.env[envVar]) || defaultValue;
 }
 
+/**
+ * @param {string} envVar
+ * @param {RegExp | null} defaultValue
+ * @returns {RegExp | null}
+ */
+function getRegexpFromEnv(envVar, defaultValue = null) {
+	const value = process.env[envVar];
+	if (!value) {
+		return defaultValue;
+	}
+	return new RegExp(value);
+}
+
+const defaultPattern = getRegexpFromEnv('RABVAL_PATTERN');
+
 const C = {
 	unusedFailureThreshold: {
 		vhost: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_VHOST', 0.3),
 		exchange: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_EXCHANGE', 0.3),
 		queue: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_QUEUE', 0.3),
+	},
+	pattern: {
+		vhosts: getRegexpFromEnv('RABVAL_PATTERN_VHOSTS', defaultPattern),
+		users: getRegexpFromEnv('RABVAL_PATTERN_USERS', defaultPattern),
+		policies: getRegexpFromEnv('RABVAL_PATTERN_POLICIES', defaultPattern),
+		queues: getRegexpFromEnv('RABVAL_PATTERN_QUEUES', defaultPattern),
+		exchanges: getRegexpFromEnv('RABVAL_PATTERN_EXCHANGES', defaultPattern),
 	},
 	normalStringAllowList: getListFromEnv('RABVAL_STRING_ALLOW', ','),
 };

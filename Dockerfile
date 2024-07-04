@@ -1,5 +1,7 @@
 FROM node:18-alpine
 
+LABEL org.opencontainers.image.description="RabbitMQ toolbelt for managing, validating and deploying your definitions.json"
+
 ARG BUILD_DIR=/tmp/rabbit-validator-build
 
 RUN mkdir -p ${BUILD_DIR}

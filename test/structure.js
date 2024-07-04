@@ -67,6 +67,45 @@ describe('invalid strings', () => {
 	});
 });
 
+describe('pattern matching names', () => {
+	it('users', () => {
+		/* Should pass because users pattern is configured to deny "uu" in the beginning */
+		assertPart('users', [{
+			name: 'xxuser',
+			password_hash: '',
+			hashing_algorithm: '',
+			tags: [],
+			limits: {},
+		}]);
+
+		assert.throws(() => {
+			assertPart('users', [{
+				name: 'uuser',
+				password_hash: '',
+				hashing_algorithm: '',
+				tags: [],
+				limits: {},
+			}]);
+		}, /expected .+ to match .+/i);
+	});
+
+	it('queues', () => {
+		assert.throws(() => {
+			assertPart('queues', [{
+				name: 'xxqueue',
+			}]);
+		}, /expected .+ to match .+/i);
+	});
+
+	it('exchanges', () => {
+		assert.throws(() => {
+			assertPart('exchanges', [{
+				name: 'xxexchange',
+			}]);
+		}, /expected .+ to match .+/i);
+	});
+});
+
 describe('validateAll', () => {
 	it('reports structural errors if hash functions throw', () => {
 		const valid = readJSONSync('./fixtures/full.json');
