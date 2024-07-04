@@ -33,7 +33,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 				console.warn(`Warning(usage): Empirically used but missing queue "${u.queue}" in "${vhost}"`);
 			}
 		} else {
-			throw new Error('Unexpected usage record type');
+			throw new Error(`Unexpected usage record type: ${JSON.stringify(u)}`);
 		}
 	}
 
@@ -50,7 +50,7 @@ const assertUsage = (definitions, usageStats, throwOnFirstError = false) => {
 		} else if (u.queue) {
 			index.queues.delete({ vhost, name: u.queue });
 		} else {
-			throw new Error('Unexpected usage record type');
+			throw new Error(`Unexpected usage record type: ${JSON.stringify(u)}`);
 		}
 	}
 
