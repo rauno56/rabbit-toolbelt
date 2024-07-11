@@ -36,6 +36,7 @@ function getRegexpFromEnv(envVar, defaultValue = null) {
 }
 
 const defaultPattern = getRegexpFromEnv('RABVAL_PATTERN');
+const defaultAllowList = getListFromEnv('RABVAL_STRING_ALLOW', ',');
 
 const C = {
 	unusedFailureThreshold: {
@@ -50,7 +51,13 @@ const C = {
 		queues: getRegexpFromEnv('RABVAL_PATTERN_QUEUES', defaultPattern),
 		exchanges: getRegexpFromEnv('RABVAL_PATTERN_EXCHANGES', defaultPattern),
 	},
-	normalStringAllowList: getListFromEnv('RABVAL_STRING_ALLOW', ','),
+	normalStringAllowList: defaultAllowList,
+	nameAllowList: {
+		vhosts: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_VHOSTS', ',')),
+		users: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_USERS', ',')),
+		queues: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_QUEUES', ',')),
+		exchanges: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_EXCHANGES', ',')),
+	},
 };
 
 assert(isInRange(C.unusedFailureThreshold.vhost, 0, 1), 'Unused failure ratio out of bounds [0, 1]');

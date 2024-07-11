@@ -32,12 +32,12 @@ const normalString = () => refine(string(), 'normal string', (value) => {
 	}).join('');
 	return `A string with unexpected characters: "${normalized}" printed as "${value}"`;
 });
-const genPatternedValidator = (pattern) => {
+const genPatternedValidator = (pattern, allowList = []) => {
 	if (!(pattern instanceof RegExp)) {
 		return normalString;
 	}
 	return () => refine(normalString(), 'patterned string', (value) => {
-		if (C.normalStringAllowList.includes(value) || pattern.test(value)) {
+		if (allowList.includes(value) || pattern.test(value)) {
 			return true;
 		}
 		return `Expected "${value}" to match ${pattern}`;
@@ -51,14 +51,14 @@ const rootStructure = {
 	product_name: string(),
 	product_version: string(),
 	users: array(object({
-		name: genPatternedValidator(C.pattern.users)(),
+		name: genPatternedValidator(C.pattern.users, C.nameAllowList.users)(),
 		password_hash: string(),
 		hashing_algorithm: string(),
 		tags: array(string()),
 		limits: object(),
 	})),
 	vhosts: array(object({
-		name: genPatternedValidator(C.pattern.vhosts)(),
+		name: genPatternedValidator(C.pattern.vhosts, C.nameAllowList.vhosts)(),
 	})),
 	permissions: array(object({
 		user: normalString(),
@@ -93,7 +93,7 @@ const rootStructure = {
 		priority: number(),
 	})),
 	queues: array(object({
-		name: genPatternedValidator(C.pattern.queues)(),
+		name: genPatternedValidator(C.pattern.queues, C.nameAllowList.queues)(),
 		vhost: normalString(),
 		durable: boolean(),
 		auto_delete: boolean(),
@@ -115,7 +115,7 @@ const rootStructure = {
 	})),
 	exchanges: array(object(
 		{
-			name: genPatternedValidator(C.pattern.exchanges)(),
+			name: genPatternedValidator(C.pattern.exchanges, C.nameAllowList.exchanges)(),
 			vhost: normalString(),
 			type: enums(['topic', 'headers', 'direct', 'fanout']),
 			durable: boolean(),
