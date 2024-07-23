@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 LABEL org.opencontainers.image.description="RabbitMQ toolbelt for managing, validating and deploying your definitions.json"
 
@@ -6,7 +6,7 @@ ARG BUILD_DIR=/tmp/rabbit-validator-build
 
 RUN mkdir -p ${BUILD_DIR}
 # install curl for calling rabbitmq API to apply the config. Perhaps a desirable usecase after validation.
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && apt-get clean
 
 # We don't want to change original image's WORKDIR, thus using cd before every command
 COPY package.json package-lock.json ${BUILD_DIR}/
