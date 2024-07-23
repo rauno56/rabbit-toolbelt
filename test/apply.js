@@ -1,17 +1,9 @@
 import { strict as assert } from 'assert';
 import { describe, it } from 'node:test';
 
-import { readJSONSync } from '../src/utils.js';
+import { copy, readJSONSync } from '../src/utils.js';
 import { apply as _apply, revert as _revert } from '../src/apply.js';
 import _compileDiff from '../src/diff.js';
-
-import { inspect } from 'node:util';
-
-inspect.defaultOptions.depth++;
-
-const copy = (obj) => {
-	return JSON.parse(JSON.stringify(obj));
-};
 
 // make sure we never change used objects to avoid having to debug our tests
 const apply = (diff, definitions) => _apply(copy(diff), copy(definitions));

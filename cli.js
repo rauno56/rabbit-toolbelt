@@ -4,11 +4,12 @@ import { strict as assert } from 'node:assert';
 import path from 'node:path';
 import { inspect } from 'node:util';
 
-import validate from './src/validate.js';
-import diff from './src/diff.js';
-import deploy from './src/deploy.js';
 import apply from './src/apply.js';
-import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync } from './src/utils.js';
+import deploy from './src/deploy.js';
+import diff from './src/diff.js';
+import merge from './src/merge.js';
+import validate from './src/validate.js';
+import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync, copy } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
 const opts = {
@@ -56,11 +57,18 @@ if (
 	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
 	console.error('Commands:');
 	console.error();
+	console.error('merge <path/diff.json ...>');
+	console.error('         Takes multiple JSON diff files, merges them and outputs the result to stdout. Duplicate resources are left in by default.');
+	console.error('         Options:');
+	console.error('         --ignore-file\tPath to ignore file.');
+	console.error('         --json       \tOutput JSON to make parsing the result with another programm easier.');
+	console.error('         --pretty     \tForce pretty-printed output.');
+	console.error();
 	console.error('apply <path/diff.json> <path/definitions.json>');
 	console.error('         Applies JSON diff to a definition file.');
 	console.error('         Options:');
 	console.error('         --revert\tRevert the direction of the diff. Useful when applying diffs to definition files to match them to servers.');
-	console.error('         --write\tWrite the result back to file diffed instead of writing to stdout.');
+	console.error('         --write \tWrite the result back to file diffed instead of writing to stdout.');
 	console.error();
 	console.error('validate <path/definitions.json> [<path/usage.json>]');
 	console.error('         Validates definition file.');
@@ -71,8 +79,8 @@ if (
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
 	console.error('         --ignore-file\tPath to ignore file.');
-	console.error('         --pretty     \tForce pretty-printed output.');
 	console.error('         --json       \tOutput JSON to make parsing the result with another programm easier.');
+	console.error('         --pretty     \tForce pretty-printed output.');
 	console.error('         --limit      \tLimit the number of changes to show for each type.');
 	console.error('         --summary    \tOutput summary instead of the full list of differences.');
 	console.error();
@@ -139,29 +147,32 @@ const commands = {
 			return console.log(JSON.stringify(result));
 		}
 
-		inspect.defaultOptions.depth += 3;
-		inspect.defaultOptions.compact = 7;
-		inspect.defaultOptions.breakLength = 200;
-		inspect.defaultOptions.maxStringLength = Infinity;
-		inspect.defaultOptions.maxArrayLength = opts.limit || Infinity;
-
 		console.log(
-			Object.fromEntries(
-				Object.entries(result)
-					.reduce((acc, [op, resources]) => {
-						const shaken = Object.entries(resources)
-							.filter(([, changes]) => changes.length)
-							.map(([key, changes]) => {
-								if (opts.summary) {
-									return [key, changes.length];
-								}
-								return [key, changes];
-							});
-						if (shaken.length) {
-							acc.push([op, Object.fromEntries(shaken)]);
-						}
-						return acc;
-					}, [])
+			inspect(
+				Object.fromEntries(
+					Object.entries(copy(result))
+						.reduce((acc, [op, resources]) => {
+							const shaken = Object.entries(resources)
+								.filter(([, changes]) => changes.length)
+								.map(([key, changes]) => {
+									if (opts.summary) {
+										return [key, changes.length];
+									}
+									return [key, changes];
+								});
+							if (shaken.length) {
+								acc.push([op, Object.fromEntries(shaken)]);
+							}
+							return acc;
+						}, [])
+				), {
+					colors: process.stdout.hasColors(),
+					depth: 6,
+					compact: 7,
+					breakLength: 200,
+					maxStringLength: Infinity,
+					maxArrayLength: opts.limit || Infinity,
+				}
 			)
 		);
 	},
@@ -194,6 +205,24 @@ const commands = {
 		}
 
 		return result;
+	},
+	merge: (...files) => {
+		const ignoreList = opts.ignoreFile ? readIgnoreFileSync(opts.ignoreFile) : null;
+		const result = merge(ignoreList, ...files).toDefinitions();
+
+		if (!opts.pretty && (opts.json || !process.stdout.isTTY)) {
+			return console.log(JSON.stringify(result));
+		}
+
+		console.log(inspect(copy(result), {
+			colors: process.stdout.hasColors(),
+			showHidden: false,
+			depth: 6,
+			compact: 7,
+			breakLength: 100,
+			maxStringLength: Infinity,
+			maxArrayLength: Infinity,
+		}));
 	},
 };
 

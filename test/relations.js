@@ -1,12 +1,8 @@
 import { strict as assert } from 'assert';
 import { describe, it } from 'node:test';
 
-import { readJSONSync } from '../src/utils.js';
+import { copy, readJSONSync } from '../src/utils.js';
 import assertRelations from '../src/relations.js';
-
-const copy = (obj) => {
-	return JSON.parse(JSON.stringify(obj));
-};
 
 const valid = readJSONSync('./fixtures/full.json');
 

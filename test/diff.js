@@ -1,12 +1,8 @@
 import { strict as assert } from 'assert';
 import { describe, it } from 'node:test';
 
-import { readJSONSync } from '../src/utils.js';
+import { copy, readJSONSync } from '../src/utils.js';
 import diff from '../src/diff.js';
-
-const copy = (obj) => {
-	return JSON.parse(JSON.stringify(obj));
-};
 
 const valid = readJSONSync('./fixtures/full.json');
 
@@ -19,14 +15,14 @@ describe('diff', () => {
 	it('validates input objects to be definition files', () => {
 		diff(valid, valid);
 		assert.throws(() => {
-			const unvalid = copy(valid);
-			unvalid.exchanges = false;
-			diff(valid, unvalid);
+			const invalid = copy(valid);
+			invalid.exchanges = false;
+			diff(valid, invalid);
 		});
 		assert.throws(() => {
-			const unvalid = copy(valid);
-			unvalid.exchanges = false;
-			diff(unvalid, valid);
+			const invalid = copy(valid);
+			invalid.exchanges = false;
+			diff(invalid, valid);
 		});
 	});
 

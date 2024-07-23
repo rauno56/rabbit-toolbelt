@@ -4,6 +4,7 @@ import { assertObj, assertStr } from './utils.js';
 import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
 
+export const SOURCE_SYM = Symbol.for('SOURCE_PATH');
 const pushToMapOfArrays = (map, key, item) => {
 	nodeAssert.ok(map instanceof Map);
 	nodeAssert.equal(typeof key, 'string');
@@ -158,9 +159,9 @@ class Index {
 		return index;
 	}
 
-	static fromDefinitions(definitions, throwOnFirstError, ignoreIndex) {
+	static fromDefinitions(definitions, throwOnFirstError, ignoreIndex, sourcePath) {
 		const index = new Index();
-		index.build(definitions, throwOnFirstError, ignoreIndex);
+		index.build(definitions, throwOnFirstError, ignoreIndex, sourcePath);
 
 		return index;
 	}
@@ -226,92 +227,154 @@ class Index {
 		}
 	}
 
-	build(definitions, throwOnFirstError = true, ignoreIndex = null) {
-		nodeAssert.ok(definitions && typeof definitions, 'object');
+	build(definitions, throwOnFirstError, ignoreIndex, sourcePath) {
 		this.init();
+
+		return this.merge(definitions, throwOnFirstError, ignoreIndex, sourcePath);
+	}
+
+	merge(definitions, throwOnFirstError = true, ignoreIndex = null, sourcePath = null) {
+		nodeAssert.ok(definitions && typeof definitions, 'object');
+		nodeAssert.equal(definitions instanceof Index, false, '`merge` accepts definitions, not built Index');
+		const {
+			users,
+			vhosts,
+			permissions,
+			topic_permissions,
+			parameters, // unmanaged
+			global_parameters, // unmanaged
+			policies, // unmanaged
+			queues,
+			exchanges,
+			bindings,
+			...meta
+		} = definitions;
+
+		// TODO: throw if meta already has any of the fields provided
+		this.meta = meta;
+		// TODO: merge these together into a map
+		this.unmanaged = {
+			parameters,
+			global_parameters,
+			policies,
+		};
 
 		const assert = failureCollector(throwOnFirstError);
 
-		for (const vhost of definitions.vhosts) {
-			// will not report failure because it'd already be caught by the structural validation
-			try { this.vhosts.hash(vhost); } catch { continue; }
-			if (ignoreIndex && isIgnored.vhosts(ignoreIndex, vhost)) { continue; }
-			assert.ok(!this.vhosts.get(vhost), `Duplicate vhost: "${vhost.name}"`);
-			this.vhosts.add(vhost);
-		}
-
-		for (const queue of definitions.queues) {
-			try { this.queues.hash(queue); } catch { continue; }
-			if (ignoreIndex && isIgnored.queues(ignoreIndex, queue)) { continue; }
-			assert.ok(!this.queues.get(queue), `Duplicate queue: "${queue.name}" in vhost "${queue.vhost}"`);
-			this.queues.add(queue);
-		}
-
-		for (const exchange of definitions.exchanges) {
-			try { this.exchanges.hash(exchange); } catch { continue; }
-			if (ignoreIndex && isIgnored.exchanges(ignoreIndex, exchange)) { continue; }
-			assert.ok(!this.exchanges.get(exchange), `Duplicate exchange: "${exchange.name}" in vhost "${exchange.vhost}"`);
-			this.exchanges.add(exchange);
-		}
-
-		for (const binding of definitions.bindings) {
-			try { this.bindings.hash(binding); } catch { continue; }
-			const { vhost } = binding;
-			if (ignoreIndex && isIgnored.bindings(ignoreIndex, binding)) { continue; }
-			const from = this.exchanges.get({ vhost, name: binding.source });
-			assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
-
-			const to = this[destinationTypeToIndex[binding.destination_type]].get({ vhost, name: binding.destination });
-			assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
-
-			if (from) {
-				if (from.type === 'headers') {
-					// TODO: TEST THIS
-					assert.ok(!binding.routing_key, `Routing key is ignored for header exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-				} else if (from.type === 'topic') {
-					// TODO: TEST THIS
-					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-				} else if (from.type === 'direct') {
-					// TODO: TEST THIS
-					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-				} else if (from.type === 'fanout') {
-					// TODO: TEST THIS
-					assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-					assert.ok(!binding.routing_key, `Routing key is ignored for ${from.type} exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-				} else {
-					assert.fail(`Unexpected binding type: ${from.type}`);
-				}
+		if (typeof vhosts !== 'undefined') {
+			for (const vhost of vhosts) {
+				// will not report failure because it'd already be caught by the structural validation
+				try { this.vhosts.hash(vhost); } catch { continue; }
+				if (ignoreIndex && isIgnored.vhosts(ignoreIndex, vhost)) { continue; }
+				vhost[SOURCE_SYM] = sourcePath;
+				assert.unique.vhosts(this, vhost);
+				this.vhosts.add(vhost);
 			}
-
-			assert.ok(!this.bindings.get(binding), `Duplicate binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${binding.vhost}"`);
-			this.bindings.add(binding);
 		}
 
-		for (const user of definitions.users) {
-			try { this.users.hash(user); } catch { continue; }
-			if (ignoreIndex && isIgnored.users(ignoreIndex, user)) { continue; }
-			const { name } = user;
-			assert.ok(!this.users.get(user), `Duplicate user: "${name}"`);
-			this.users.add(user);
+		if (typeof queues !== 'undefined') {
+			for (const queue of queues) {
+				try { this.queues.hash(queue); } catch { continue; }
+				if (ignoreIndex && isIgnored.queues(ignoreIndex, queue)) { continue; }
+				queue[SOURCE_SYM] = sourcePath;
+				assert.unique.queues(this, queue);
+				this.queues.add(queue);
+			}
 		}
 
-		for (const permission of definitions.permissions) {
-			try { this.permissions.hash(permission); } catch { continue; }
-			if (ignoreIndex && isIgnored.permissions(ignoreIndex, permission)) { continue; }
-			const { user, vhost } = permission;
-			assert.ok(!this.permissions.get(permission), `Duplicate permission for user "${user}" in vhost "${vhost}"`);
-			this.permissions.add(permission);
+		if (typeof exchanges !== 'undefined') {
+			for (const exchange of exchanges) {
+				try { this.exchanges.hash(exchange); } catch { continue; }
+				if (ignoreIndex && isIgnored.exchanges(ignoreIndex, exchange)) { continue; }
+				exchange[SOURCE_SYM] = sourcePath;
+				assert.unique.exchanges(this, exchange);
+				this.exchanges.add(exchange);
+			}
 		}
 
-		for (const permission of definitions.topic_permissions) {
-			try { this.topic_permissions.hash(permission); } catch { continue; }
-			if (ignoreIndex && isIgnored.topic_permissions(ignoreIndex, permission)) { continue; }
-			const { user, vhost } = permission;
-			assert.ok(!this.topic_permissions.get(permission), `Duplicate topic permission for user "${user}" in vhost "${vhost}.\n${JSON.stringify(permission)}\n${JSON.stringify(this.topic_permissions.get(permission))}"`);
-			this.topic_permissions.add(permission);
+		if (typeof bindings !== 'undefined') {
+			for (const binding of bindings) {
+				try { this.bindings.hash(binding); } catch { continue; }
+				const { vhost } = binding;
+				if (ignoreIndex && isIgnored.bindings(ignoreIndex, binding)) { continue; }
+				const from = this.exchanges.get({ vhost, name: binding.source });
+				assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
+
+				const to = this[destinationTypeToIndex[binding.destination_type]].get({ vhost, name: binding.destination });
+				assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
+
+				if (from) {
+					if (from.type === 'headers') {
+						// TODO: TEST THIS
+						assert.ok(!binding.routing_key, `Routing key is ignored for header exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					} else if (from.type === 'topic') {
+						// TODO: TEST THIS
+						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					} else if (from.type === 'direct') {
+						// TODO: TEST THIS
+						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					} else if (from.type === 'fanout') {
+						// TODO: TEST THIS
+						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+						assert.ok(!binding.routing_key, `Routing key is ignored for ${from.type} exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
+					} else {
+						assert.fail(`Unexpected binding type: ${from.type}`);
+					}
+				}
+
+				binding[SOURCE_SYM] = sourcePath;
+				assert.unique.bindings(this, binding);
+				this.bindings.add(binding);
+			}
+		}
+
+		if (typeof users !== 'undefined') {
+			for (const user of users) {
+				try { this.users.hash(user); } catch { continue; }
+				if (ignoreIndex && isIgnored.users(ignoreIndex, user)) { continue; }
+				user[SOURCE_SYM] = sourcePath;
+				assert.unique.users(this, user);
+				this.users.add(user);
+			}
+		}
+
+		if (typeof permissions !== 'undefined') {
+			for (const permission of permissions) {
+				try { this.permissions.hash(permission); } catch { continue; }
+				if (ignoreIndex && isIgnored.permissions(ignoreIndex, permission)) { continue; }
+				permission[SOURCE_SYM] = sourcePath;
+				assert.unique.permissions(this, permission);
+				this.permissions.add(permission);
+			}
+		}
+
+		if (typeof topic_permissions !== 'undefined') {
+			for (const permission of topic_permissions) {
+				try { this.topic_permissions.hash(permission); } catch { continue; }
+				if (ignoreIndex && isIgnored.topic_permissions(ignoreIndex, permission)) { continue; }
+				permission[SOURCE_SYM] = sourcePath;
+				assert.unique.topic_permissions(this, permission);
+				this.topic_permissions.add(permission);
+			}
 		}
 
 		return assert.collectFailures();
+	}
+
+	toDefinitions() {
+		return {
+			...this.meta,
+			users: [...this.users.values()],
+			vhosts: [...this.vhosts.values()],
+			permissions: [...this.permissions.values()],
+			topic_permissions: [...this.topic_permissions.values()],
+			parameters: this.unmanaged.parameters,
+			global_parameters: this.unmanaged.global_parameters,
+			policies: this.unmanaged.policies,
+			queues: [...this.queues.values()],
+			exchanges: [...this.exchanges.values()],
+			bindings: [...this.bindings.values()],
+		};
 	}
 }
 

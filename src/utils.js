@@ -4,6 +4,10 @@ import url from 'node:url';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { inspect } from 'node:util';
 
+export const copy = (obj) => {
+	return JSON.parse(JSON.stringify(obj));
+};
+
 export const readJSONSync = (path) => {
 	return JSON.parse(readFileSync(path, 'utf8'));
 };
