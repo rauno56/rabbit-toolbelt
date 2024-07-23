@@ -166,7 +166,7 @@ const commands = {
 							return acc;
 						}, [])
 				), {
-					colors: process.stdout.hasColors(),
+					colors: process.stdout.hasColors?.(),
 					depth: 6,
 					compact: 7,
 					breakLength: 200,
@@ -215,7 +215,7 @@ const commands = {
 		}
 
 		console.log(inspect(copy(result), {
-			colors: process.stdout.hasColors(),
+			colors: process.stdout.hasColors?.(),
 			showHidden: false,
 			depth: 6,
 			compact: 7,
