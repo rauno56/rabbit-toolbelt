@@ -17,7 +17,7 @@ const pushToMapOfArrays = (map, key, item) => {
 	}
 };
 
-const destinationTypeToIndex = {
+export const destinationTypeToIndex = {
 	queue: 'queues',
 	exchange: 'exchanges',
 };
@@ -295,33 +295,7 @@ class Index {
 		if (typeof bindings !== 'undefined') {
 			for (const binding of bindings) {
 				try { this.bindings.hash(binding); } catch { continue; }
-				const { vhost } = binding;
 				if (ignoreIndex && isIgnored.bindings(ignoreIndex, binding)) { continue; }
-				const from = this.exchanges.get({ vhost, name: binding.source });
-				assert.ok(from, `Missing source exchange for binding: "${binding.source}" in vhost "${vhost}"`);
-
-				const to = this[destinationTypeToIndex[binding.destination_type]].get({ vhost, name: binding.destination });
-				assert.ok(to, `Missing destination ${binding.destination_type} for binding: "${binding.destination}" in vhost "${vhost}"`);
-
-				if (from) {
-					if (from.type === 'headers') {
-						// TODO: TEST THIS
-						assert.ok(!binding.routing_key, `Routing key is ignored for header exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-					} else if (from.type === 'topic') {
-						// TODO: TEST THIS
-						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-					} else if (from.type === 'direct') {
-						// TODO: TEST THIS
-						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-					} else if (from.type === 'fanout') {
-						// TODO: TEST THIS
-						assert.equal(binding.arguments?.['x-match'], undefined, `Match arguments are ignored for ${from.type} exchanges, but set for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-						assert.ok(!binding.routing_key, `Routing key is ignored for ${from.type} exchanges, but set("${binding.routing_key}") for binding from "${binding.source}" to ${binding.destination_type} "${binding.destination}" in vhost "${vhost}"`);
-					} else {
-						assert.fail(`Unexpected binding type: ${from.type}`);
-					}
-				}
-
 				binding[SOURCE_SYM] = sourcePath;
 				assert.unique.bindings(this, binding);
 				this.bindings.add(binding);
