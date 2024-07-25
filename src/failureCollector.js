@@ -38,11 +38,56 @@ export default (throwOnFirstError = true) => {
 	defineAssert('equal');
 
 	assert.unique = {
+		users: (index, item) => {
+			const { name } = item;
+			const pItem = index.users.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate user: "${name}"${compileSourceComment(pItem, item)}`
+			);
+		},
 		vhosts: (index, item) => {
 			const pItem = index.vhosts.get(item);
 			if (!pItem) { return; }
 			throw new Error(
 				`Duplicate vhost: "${item.name}"${compileSourceComment(pItem, item)}`
+			);
+		},
+		permissions: (index, item) => {
+			const { user, vhost } = item;
+			const pItem = index.permissions.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate permission for user "${user}" in vhost "${vhost}"${compileSourceComment(pItem, item)}`
+			);
+		},
+		topic_permissions: (index, item) => {
+			const { user, vhost } = item;
+			const pItem = index.topic_permissions.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate topic permission for user "${user}" in vhost "${vhost}${compileSourceComment(pItem, item)}.\n${JSON.stringify(item)}\n${JSON.stringify(pItem)}"`
+			);
+		},
+		parameters: (index, item) => {
+			const pItem = index.parameters.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate parameter for ${item.name} of component ${item.component} in vhost ${item.vhost}${compileSourceComment(pItem, item)}`
+			);
+		},
+		global_parameters: (index, item) => {
+			const pItem = index.global_parameters.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate global parameter for ${item.name}${compileSourceComment(pItem, item)}`
+			);
+		},
+		policies: (index, item) => {
+			const pItem = index.policies.get(item);
+			if (!pItem) { return; }
+			throw new Error(
+				`Duplicate policy ${item.name} for vhost ${item.vhost}${compileSourceComment(pItem, item)}`
 			);
 		},
 		queues: (index, item) => {
@@ -64,30 +109,6 @@ export default (throwOnFirstError = true) => {
 			if (!pItem) { return; }
 			throw new Error(
 				`Duplicate binding from "${item.source}" to ${item.destination_type} "${item.destination}" in vhost "${item.vhost}"${compileSourceComment(pItem, item)}`
-			);
-		},
-		users: (index, item) => {
-			const { name } = item;
-			const pItem = index.users.get(item);
-			if (!pItem) { return; }
-			throw new Error(
-				`Duplicate user: "${name}"${compileSourceComment(pItem, item)}`
-			);
-		},
-		permissions: (index, item) => {
-			const { user, vhost } = item;
-			const pItem = index.permissions.get(item);
-			if (!pItem) { return; }
-			throw new Error(
-				`Duplicate permission for user "${user}" in vhost "${vhost}"${compileSourceComment(pItem, item)}`
-			);
-		},
-		topic_permissions: (index, item) => {
-			const { user, vhost } = item;
-			const pItem = index.topic_permissions.get(item);
-			if (!pItem) { return; }
-			throw new Error(
-				`Duplicate topic permission for user "${user}" in vhost "${vhost}${compileSourceComment(pItem, item)}.\n${JSON.stringify(item)}\n${JSON.stringify(pItem)}"`
 			);
 		},
 	};

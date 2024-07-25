@@ -38,12 +38,53 @@ describe('index', () => {
 			const index = Index.fromDefinitions(
 				copy(valid), undefined, undefined, SOURCE1
 			);
+
 			assert.throws(() => {
 				index.merge({
 					vhosts: copy([...index.vhosts.values()]),
 				}, true, undefined, SOURCE2);
-			}, new RegExp('SOURCE1.*SOURCE2'));
+			}, /SOURCE1.*SOURCE2/);
+		});
 
+		it('merges all unknown fields', () => {
+			const SOURCE1 = 'SOURCE1';
+			const SOURCE2 = 'SOURCE2';
+			const VALUE = 'value';
+			const index = Index.fromDefinitions(
+				copy(valid), undefined, undefined, SOURCE1
+			);
+
+			index.merge({
+				unmanaged: VALUE,
+			}, true, undefined, SOURCE2);
+
+			assert.equal(index.toDefinitions().unmanaged, VALUE);
+		});
+
+		it('errors if unmanaged key is already set', () => {
+			const SOURCE1 = 'SOURCE1';
+			const SOURCE2 = 'SOURCE2';
+			const index = Index.fromDefinitions(
+				copy(valid), undefined, undefined, SOURCE1
+			);
+
+			assert.throws(() => {
+				index.merge({
+					rabbit_version: 'otherversion',
+				}, true, undefined, SOURCE2);
+			}, /rabbit_version/);
+		});
+
+		it('merges unmanaged arrays', () => {
+			const SOURCE1 = 'SOURCE1';
+			const SOURCE2 = 'SOURCE2';
+			const index = Index.fromDefinitions(
+				copy(valid), undefined, undefined, SOURCE1
+			);
+
+			index.merge({
+				parameters: [],
+			}, true, undefined, SOURCE2);
 		});
 	});
 });
