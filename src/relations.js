@@ -36,7 +36,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 	const indexingFailures = index.build(definitions, throwOnFirstError);
 
 	// test whether vhost is used anywhere
-	for (const vhost of definitions.vhosts) {
+	for (const vhost of index.vhosts.values()) {
 		if (!index.resources.byVhost.get(vhost.name)) {
 			if (vhost.name) {
 				console.warn(`Warning: Unused vhost "${vhost.name}"`);
@@ -45,7 +45,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 	}
 
 	// test whether queue is used anywhere: ? -> Q
-	for (const queue of definitions.queues) {
+	for (const queue of index.queues.values()) {
 		if (!index.bindings.byDestination(queue)) {
 			if (queue.name && queue.vhost) {
 				console.warn(`Warning: Unbound queue "${queue.name}" in vhost "${queue.vhost}"`);
@@ -54,7 +54,7 @@ const assertRelations = (definitions, throwOnFirstError = true) => {
 	}
 
 	// test whether exchange is used anywhere: EX -> ? or ? -> EX
-	for (const exchange of definitions.exchanges) {
+	for (const exchange of index.exchanges.values()) {
 		if (!index.bindings.bySource(exchange) && !index.bindings.byDestination(exchange)) {
 			if (exchange.name && exchange.vhost) {
 				console.warn(`Warning: Unbound exchange "${exchange.name}" in vhost "${exchange.vhost}"`);
