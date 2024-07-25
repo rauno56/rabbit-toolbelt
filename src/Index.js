@@ -50,13 +50,40 @@ export const detectResourceType = (resource) => {
 };
 
 export const key = {
-	resource: (resource) => {
-		return key[detectResourceType(resource)](resource);
+	users: ({ name }) => {
+		assertStr(name, 'name');
+		return `U[${name}]`;
 	},
 	// the implementation assumes all hash functions are unique for a given input
 	vhosts: ({ name }) => {
 		assertStr(name, 'name');
 		return `${name}`;
+	},
+	permissions: ({ vhost, user }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		return `P[${user} @ ${vhost}]`;
+	},
+	topic_permissions: ({ vhost, user, exchange }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(user, 'user');
+		assertStr(exchange, 'exchange');
+		return `TP[${user} @ ${vhost}.${exchange}]`;
+	},
+	parameters: ({ vhost, component, name }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(component, 'component');
+		assertStr(name, 'name');
+		return `PAR[${name} @ ${component} @ ${vhost}]`;
+	},
+	global_parameters:  ({ name }) => {
+		assertStr(name, 'name');
+		return `GPAR[${name}]`;
+	},
+	policies: ({ vhost, name }) => {
+		assertStr(vhost, 'vhost');
+		assertStr(name, 'name');
+		return `PO[${name} @ ${vhost}]`;
 	},
 	queues: ({ vhost, name }) => {
 		assertStr(vhost, 'vhost');
@@ -75,20 +102,8 @@ export const key = {
 		assertStr(destination_type, 'destination_type');
 		return `B[${source}->${destination_type}.${destination} @ ${vhost}](${routing_key}/${key.args(args)})`;
 	},
-	users: ({ name }) => {
-		assertStr(name, 'name');
-		return `U[${name}]`;
-	},
-	permissions: ({ vhost, user }) => {
-		assertStr(vhost, 'vhost');
-		assertStr(user, 'user');
-		return `P[${user} @ ${vhost}]`;
-	},
-	topic_permissions: ({ vhost, user, exchange }) => {
-		assertStr(vhost, 'vhost');
-		assertStr(user, 'user');
-		assertStr(exchange, 'exchange');
-		return `TP[${user} @ ${vhost}.${exchange}]`;
+	resource: (resource) => {
+		return key[detectResourceType(resource)](resource);
 	},
 	args: (args) => {
 		return Object.entries(args ?? {}).sort(([a], [b]) => a < b ? -1 : 1).map((p) => p.join('=')).join();
@@ -123,6 +138,7 @@ export const isIgnored = {
 // A quick index to be able to quickly see which resources we've seen without the need to iterate through all
 // of them every time.
 class Index {
+	meta = {};
 	vhosts = null;
 	queues = null;
 	exchanges = null;
@@ -171,6 +187,8 @@ class Index {
 	}
 
 	init() {
+		this.meta = {};
+
 		// EX/Q: vhost.name -> EX/Q
 		const resourceByVhost = new Map();
 		// bindings: {resource} -> binding[]
@@ -210,13 +228,16 @@ class Index {
 		};
 
 		const maps = {
+			users: new HashSet(key.users),
 			vhosts: new HashSet(key.vhosts),
+			permissions: new HashSet(key.permissions, pushToResourceByVhost),
+			topic_permissions: new HashSet(key.topic_permissions, pushToResourceByVhost),
+			parameters: new HashSet(key.parameters), /* not deployed */
+			global_parameters: new HashSet(key.global_parameters), /* not deployed */
+			policies: new HashSet(key.policies), /* not deployed */
 			queues: new HashSet(key.queues, pushToResourceByVhost),
 			exchanges: new HashSet(key.exchanges, pushToResourceByVhost),
 			bindings: bindingSet,
-			users: new HashSet(key.users),
-			permissions: new HashSet(key.permissions, pushToResourceByVhost),
-			topic_permissions: new HashSet(key.topic_permissions, pushToResourceByVhost),
 			resources: {
 				get byVhost() { return resourceByVhost; },
 			},
@@ -241,94 +262,45 @@ class Index {
 			vhosts,
 			permissions,
 			topic_permissions,
-			parameters, // unmanaged
-			global_parameters, // unmanaged
-			policies, // unmanaged
+			parameters, // not deployed
+			global_parameters, // not deployed
+			policies, // not deployed
 			queues,
 			exchanges,
 			bindings,
 			...meta
 		} = definitions;
 
-		// TODO: throw if meta already has any of the fields provided
-		this.meta = meta;
-		// TODO: merge these together into a map
-		this.unmanaged = {
+		const assert = failureCollector(throwOnFirstError);
+
+		for (const [key, value] of Object.entries(meta)) {
+			assert.ok(!this.meta[key], `Duplicate value for key ${key}`);
+			this.meta[key] = value;
+		}
+
+		const indexedResources = {
+			users,
+			vhosts,
+			permissions,
+			topic_permissions,
 			parameters,
 			global_parameters,
 			policies,
+			queues,
+			exchanges,
+			bindings,
 		};
 
-		const assert = failureCollector(throwOnFirstError);
-
-		if (typeof vhosts !== 'undefined') {
-			for (const vhost of vhosts) {
-				// will not report failure because it'd already be caught by the structural validation
-				try { this.vhosts.hash(vhost); } catch { continue; }
-				if (ignoreIndex && isIgnored.vhosts(ignoreIndex, vhost)) { continue; }
-				vhost[SOURCE_SYM] = sourcePath;
-				assert.unique.vhosts(this, vhost);
-				this.vhosts.add(vhost);
-			}
-		}
-
-		if (typeof queues !== 'undefined') {
-			for (const queue of queues) {
-				try { this.queues.hash(queue); } catch { continue; }
-				if (ignoreIndex && isIgnored.queues(ignoreIndex, queue)) { continue; }
-				queue[SOURCE_SYM] = sourcePath;
-				assert.unique.queues(this, queue);
-				this.queues.add(queue);
-			}
-		}
-
-		if (typeof exchanges !== 'undefined') {
-			for (const exchange of exchanges) {
-				try { this.exchanges.hash(exchange); } catch { continue; }
-				if (ignoreIndex && isIgnored.exchanges(ignoreIndex, exchange)) { continue; }
-				exchange[SOURCE_SYM] = sourcePath;
-				assert.unique.exchanges(this, exchange);
-				this.exchanges.add(exchange);
-			}
-		}
-
-		if (typeof bindings !== 'undefined') {
-			for (const binding of bindings) {
-				try { this.bindings.hash(binding); } catch { continue; }
-				if (ignoreIndex && isIgnored.bindings(ignoreIndex, binding)) { continue; }
-				binding[SOURCE_SYM] = sourcePath;
-				assert.unique.bindings(this, binding);
-				this.bindings.add(binding);
-			}
-		}
-
-		if (typeof users !== 'undefined') {
-			for (const user of users) {
-				try { this.users.hash(user); } catch { continue; }
-				if (ignoreIndex && isIgnored.users(ignoreIndex, user)) { continue; }
-				user[SOURCE_SYM] = sourcePath;
-				assert.unique.users(this, user);
-				this.users.add(user);
-			}
-		}
-
-		if (typeof permissions !== 'undefined') {
-			for (const permission of permissions) {
-				try { this.permissions.hash(permission); } catch { continue; }
-				if (ignoreIndex && isIgnored.permissions(ignoreIndex, permission)) { continue; }
-				permission[SOURCE_SYM] = sourcePath;
-				assert.unique.permissions(this, permission);
-				this.permissions.add(permission);
-			}
-		}
-
-		if (typeof topic_permissions !== 'undefined') {
-			for (const permission of topic_permissions) {
-				try { this.topic_permissions.hash(permission); } catch { continue; }
-				if (ignoreIndex && isIgnored.topic_permissions(ignoreIndex, permission)) { continue; }
-				permission[SOURCE_SYM] = sourcePath;
-				assert.unique.topic_permissions(this, permission);
-				this.topic_permissions.add(permission);
+		for (const res of Object.keys(indexedResources)) {
+			if (typeof definitions[res] !== 'undefined') {
+				for (const item of definitions[res]) {
+					// will not report failure because it'd already be caught by the structural validation
+					try { this[res].hash(item); } catch { continue; }
+					if (ignoreIndex && isIgnored[res](ignoreIndex, item)) { continue; }
+					item[SOURCE_SYM] = sourcePath;
+					assert.unique[res](this, item);
+					this[res].add(item);
+				}
 			}
 		}
 
@@ -342,9 +314,9 @@ class Index {
 			vhosts: [...this.vhosts.values()],
 			permissions: [...this.permissions.values()],
 			topic_permissions: [...this.topic_permissions.values()],
-			parameters: this.unmanaged.parameters,
-			global_parameters: this.unmanaged.global_parameters,
-			policies: this.unmanaged.policies,
+			parameters: [...this.parameters.values()],
+			global_parameters: [...this.global_parameters.values()],
+			policies: [...this.policies.values()],
 			queues: [...this.queues.values()],
 			exchanges: [...this.exchanges.values()],
 			bindings: [...this.bindings.values()],
