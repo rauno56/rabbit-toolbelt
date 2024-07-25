@@ -1,6 +1,6 @@
 {
   "name": "rabbit-validator",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "type": "module",
   "description": "Validator for the definition files of RabbitMQ",
   "main": "src/validate.js",

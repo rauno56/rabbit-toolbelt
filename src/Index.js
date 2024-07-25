@@ -76,7 +76,7 @@ export const key = {
 		assertStr(name, 'name');
 		return `PAR[${name} @ ${component} @ ${vhost}]`;
 	},
-	global_parameters:  ({ name }) => {
+	global_parameters: ({ name }) => {
 		assertStr(name, 'name');
 		return `GPAR[${name}]`;
 	},
@@ -111,8 +111,26 @@ export const key = {
 };
 
 export const isIgnored = {
+	users: (index, item) => {
+		return index.users.has(item);
+	},
 	vhosts: (index, item) => {
 		return index.vhosts.has(item);
+	},
+	permissions: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user });
+	},
+	topic_permissions: (index, item) => {
+		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user }) || index.exchanges.has({ vhost: item.vhost, name: item.exchange });
+	},
+	parameters: (index, item) => {
+		return index.vhosts.has({ name: item.vhost });
+	},
+	global_parameters: (/*index, item*/) => {
+		return false;
+	},
+	policies: (index, item) => {
+		return index.vhosts.has({ name: item.vhost });
 	},
 	queues: (index, item) => {
 		return index.vhosts.has({ name: item.vhost }) || index.queues.has(item);
@@ -123,15 +141,6 @@ export const isIgnored = {
 	bindings: (index, item) => {
 		const { vhost } = item;
 		return index.vhosts.has({ name: item.vhost }) || index[destinationTypeToIndex[item.destination_type]].has({ vhost, name: item.destination }) || index.exchanges.has({ vhost, name: item.source });
-	},
-	users: (index, item) => {
-		return index.users.has(item);
-	},
-	permissions: (index, item) => {
-		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user });
-	},
-	topic_permissions: (index, item) => {
-		return index.vhosts.has({ name: item.vhost }) || index.users.has({ name: item.user }) || index.exchanges.has({ vhost: item.vhost, name: item.exchange });
 	},
 };
 
