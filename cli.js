@@ -8,7 +8,7 @@ import apply from './src/apply.js';
 import deploy from './src/deploy.js';
 import diff from './src/diff.js';
 import merge from './src/merge.js';
-import validate from './src/validate.js';
+import { validateAll } from './src/validate.js';
 import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync, copy } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
 
@@ -36,7 +36,7 @@ const opts = {
 
 const [,, subcommand, ...args] = process.argv;
 
-const unparsedOptions = args.filter((a) => a.startsWith('-'));
+const unparsedOptions = args.filter((a) => a !== '-' && a.startsWith('-'));
 
 if (unparsedOptions.length) {
 	console.error(`Unrecognized options: ${unparsedOptions.join(', ')}`);
@@ -72,10 +72,12 @@ if (
 	console.error();
 	console.error('validate <path/definitions.json> [<path/usage.json>]');
 	console.error('         Validates definition file.');
+	console.error('         Provide "-" in place of the file name to read definitions from stdin.');
 	console.error('         usage.json is a fail containing array of objects { vhost, exchange, queue } | { vhost, queue } of used RabbitMQ resources.');
 	console.error();
-	console.error('diff <path/definitions.before.json> <path/definitions.after.json>');
+	console.error('diff <path/definitions.json before> <path/definitions.json after>');
 	console.error('         Diffs two definition files or servers.');
+	console.error('         Provide "-" in place of one of the file names to read definitions from stdin.');
 	console.error('         Either or both of the arguments can also be paths to a management API: https://username:password@live.rabbit.acme.com');
 	console.error('         Options:');
 	console.error('         --ignore-file\tPath to ignore file.');
@@ -84,8 +86,9 @@ if (
 	console.error('         --limit      \tLimit the number of changes to show for each type.');
 	console.error('         --summary    \tOutput summary instead of the full list of differences.');
 	console.error();
-	console.error('deploy <base url for a management API> <path/definitions.to.deploy.json>');
+	console.error('deploy <base url for a management API> <path/definitions.json>');
 	console.error('         Connects to a management API and deploys the state in provided definitions file.');
+	console.error('         Provide "-" in place of the file name to read definitions from stdin.');
 	console.error('         Base url is root url for the management API: http://username:password@dev.rabbitmq.com');
 	console.error('         Protocol is required to be http or https.');
 	console.error('         Options:');
@@ -101,9 +104,9 @@ if (
 assert(!opts.pretty || !opts.json, '--pretty and --json options are exclusive.');
 
 const commands = {
-	validate: (filePath, usageFilePath) => {
-		const fullFilePath = path.resolve(filePath);
-		const fullUsageFilePath = usageFilePath && path.resolve(usageFilePath);
+	validate: async (filePath, usageFilePath) => {
+		const definitions = await resolveDefinitions(filePath);
+		const usageStats = typeof usageFilePath === 'string' ? readJSONSync(path.resolve(usageFilePath)) : null;
 
 		const logFailures = (failures) => {
 			assert.equal(Array.isArray(failures), true, `Invalid list of failures: ${failures}`);
@@ -120,10 +123,10 @@ const commands = {
 			);
 		};
 
-		console.debug(`Validating a definitions file at ${fullFilePath}${fullUsageFilePath ? ' with usage stats from ' + fullUsageFilePath : ''}`);
+		console.debug(`Validating a definitions file at ${filePath}${usageFilePath ? ' with usage stats from ' + usageFilePath : ''}`);
 
 		// Failure[]
-		const failures = validate(fullFilePath, fullUsageFilePath);
+		const failures = validateAll(definitions, usageStats);
 		if (failures.length) {
 			logFailures(failures);
 			process.exit(1);
@@ -134,6 +137,7 @@ const commands = {
 	diff: async (beforeInput, afterInput) => {
 		assert.equal(typeof beforeInput, 'string', 'Path or url to before definitions required');
 		assert.equal(typeof afterInput, 'string', 'Path or url to after definitions required');
+		assert.ok(beforeInput !== '-' || afterInput !== '-', 'Only one of the inputs can come from stdin');
 
 		const [before, after] = await Promise.all([
 			resolveDefinitions(beforeInput),
@@ -176,7 +180,7 @@ const commands = {
 			)
 		);
 	},
-	deploy: (serverBaseUrl, definitions) => {
+	deploy: async (serverBaseUrl, definitions) => {
 		const {
 			noDeletions,
 			recreateChanged,
@@ -187,7 +191,7 @@ const commands = {
 
 		return deploy(
 			new URL(serverBaseUrl),
-			readJSONSync(definitions),
+			await resolveDefinitions(definitions),
 			{ dryRun, noDeletions, recreateChanged, ignoreList }
 		);
 	},

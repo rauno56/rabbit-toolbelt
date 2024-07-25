@@ -81,6 +81,7 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	const changedResourceCount = Object.entries(changes.changed)
 		.reduce((acc, [type, list]) => acc + (mutableResources.includes(type) ? 0 : list.length), 0);
 
+	// TODO: Require the permissions to be added to user making the changes?
 	const hasAddedPermissionsForVhosts = changes.added.vhosts.every(({ name }) => {
 		return !changes.added.permissions.find(({ vhost }) => vhost === name);
 	});

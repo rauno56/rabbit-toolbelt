@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { json } from 'node:stream/consumers';
 
 import {
 	pathResolve,
@@ -6,6 +7,9 @@ import {
 import RabbitClient from './RabbitClient.js';
 
 export const resolveDefinitions = async (input) => {
+	if (input === '-') {
+		return json(process.stdin);
+	}
 	const location = pathResolve(input);
 	if (location instanceof URL) {
 		const client = new RabbitClient(location);
