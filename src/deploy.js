@@ -60,6 +60,8 @@ const deployResources = async (client, changes, operation, type, operationOverri
 
 		if (operation === 'changed' && operationOverride) {
 			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
+		} else if (operation === 'implicitlyAffected' && operationOverride === 'added') {
+			console.error(`recreated implicitly affected ${succeeded.length} ${type}` + failedNotice);
 		} else {
 			console.error(`${operation} ${succeeded.length} ${type}` + failedNotice);
 		}
@@ -111,6 +113,7 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 		await deployResources(client, changes, 'changed', 'queues', 'added');
 		await deployResources(client, changes, 'changed', 'bindings', 'deleted');
 		await deployResources(client, changes, 'changed', 'bindings', 'added');
+		await deployResources(client, changes, 'implicitlyAffected', 'bindings', 'added');
 	}
 
 	await deployResources(client, changes, 'added', 'bindings');
