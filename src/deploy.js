@@ -1,6 +1,8 @@
 import RabbitClient from './RabbitClient.js';
 import { diffServer } from './deploy.utils.js';
 
+import config from './config.js';
+
 // automatically url-encode template string variables
 const url = (strs, ...values) => {
 	const escapedValues = values.map(encodeURIComponent);
@@ -37,16 +39,23 @@ const C = {
 	},
 };
 
+const sleep = (ms) => {
+	return new Promise((res) => setTimeout(res, ms));
+};
+
 const deployResources = async (client, changes, operation, type, operationOverride = null) => {
 	const entries = changes[operation][type];
 	if (entries.length) {
 		const result = await Promise.allSettled(
 			entries
-				.map((resource) => {
+				.map(async (resource, idx) => {
 					const op = operationOverride ?? operation;
 					if (typeof C[op][type] === 'function') {
 						const resourceArg = resource.after || resource;
 						const [method, url] = C[op][type](resourceArg);
+						// adding increasingly longer delay for the requests to avoid server crashing. Local testing shows 9ms the minimum.
+						// With a remote server less would probably be enough because of a natural added jitter.
+						await sleep(idx * config.requestDelay);
 						return client.request(method, url, resourceArg);
 					}
 

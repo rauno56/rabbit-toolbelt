@@ -24,6 +24,15 @@ function getFloatFromEnv(envVar, defaultValue) {
 
 /**
  * @param {string} envVar
+ * @param {number} defaultValue
+ * @returns {number}
+ */
+function getIntFromEnv(envVar, defaultValue) {
+	return parseInt(process.env[envVar]) || defaultValue;
+}
+
+/**
+ * @param {string} envVar
  * @param {RegExp | null} defaultValue
  * @returns {RegExp | null}
  */
@@ -39,6 +48,7 @@ const defaultPattern = getRegexpFromEnv('RABVAL_PATTERN');
 const defaultAllowList = getListFromEnv('RABVAL_STRING_ALLOW', ',');
 
 const C = {
+	requestDelay: getIntFromEnv('RABVAL_REQUEST_DELAY', 9),
 	unusedFailureThreshold: {
 		vhost: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_VHOST', 0.3),
 		exchange: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_EXCHANGE', 0.3),
