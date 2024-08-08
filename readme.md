@@ -1,13 +1,13 @@
 # RabbitMQ toolbelt
 
-RabbitMQ toolbelt for managing, validating and deploying your `definitions.json`.
+RabbitMQ toolbelt for managing, validating and deploying `definitions.json`.
 
 ## Commands
 
 ### Validate
 
 **Subcommand**: `validate`<br>
-**Example**: `rabbit-validator validate ./definitions.json ./usage.json`
+**Example**: `rabbit-toolbelt validate ./definitions.json ./usage.json`
 
 Runs series of validations on RabbitMQ's definitions file for GitOps:
 
@@ -37,7 +37,7 @@ Such statistics can be fetch from Prometheus API for example.
 ### Resource-aware diffing
 
 **Subcommand**: `diff`<br>
-**Example**: `rabbit-validator diff http://user:password@rabbitmq.dev.acme.com/ ./local.definitions.json`
+**Example**: `rabbit-toolbelt diff http://user:password@rabbitmq.dev.acme.com/ ./local.definitions.json`
 
 Makes it easy to compare a local definitions file to a server or even two different servers.
 Both arguments can either be a path to a local file or url to a management API with credentials.
@@ -51,7 +51,7 @@ Both arguments can either be a path to a local file or url to a management API w
 ### Deployments
 
 **Subcommand**: `deploy`<br>
-**Example**: `rabbit-validator deploy ./local.definitions.json http://user:password@rabbitmq.dev.acme.com/`
+**Example**: `rabbit-toolbelt deploy ./local.definitions.json http://user:password@rabbitmq.dev.acme.com/`
 
 Connects to a management API and deploys the state in provided definitions file. Protocol is always required and has to be http or https.
 
@@ -93,17 +93,17 @@ Root vhost must be uri-encoded(to `%2f`). All other specifies are also uri-decod
 
 ```bash
 # Install from npm and run
-npx rabbit-validator validate <path/definitions.json> [<path/usage.json>]
+npx rabbit-toolbelt validate <path/definitions.json> [<path/usage.json>]
 ```
 
 #### Run from npm
 
 ```bash
-npm i rabbit-validator # install locally
+npm i rabbit-toolbelt # install locally
 
-npx rabbit-validator validate <path/definitions.json> [<path/usage.json>]
+npx rabbit-toolbelt validate <path/definitions.json> [<path/usage.json>]
 # or to force npx offline:
-npx --offline rabbit-validator validate <path/definitions.json> [<path/usage.json>]
+npx --offline rabbit-toolbelt validate <path/definitions.json> [<path/usage.json>]
 
 # --offline is not required if previously installed, but errors if
 # it isn't instead of downloading the package
@@ -112,16 +112,16 @@ npx --offline rabbit-validator validate <path/definitions.json> [<path/usage.jso
 #### Install globally from npm and run
 
 ```bash
-npm i --global rabbit-validator # install with "--global" flag puts it to path
+npm i --global rabbit-toolbelt # install with "--global" flag puts it to path
 
-rabbit-validator validate <path/definitions.json> [<path/usage.json>]
+rabbit-toolbelt validate <path/definitions.json> [<path/usage.json>]
 ```
 
 #### Run from the repo
 
 ```bash
-git clone git@github.com:rauno56/rabbit-validator.git
-cd rabbit-validator
+git clone git@github.com:rauno56/rabbit-toolbelt.git
+cd rabbit-toolbelt
 npx . validate <path/definitions.json> [<path/usage.json>]
 # or
 node cli.js validate <path/definitions.json> [<path/usage.json>]

@@ -54,7 +54,7 @@ if (
 	|| opts.h
 	|| opts.help
 ) {
-	console.error('usage: rabbit-validator <COMMAND> <OPTIONS>');
+	console.error('usage: rabbit-toolbelt <COMMAND> <OPTIONS>');
 	console.error('Commands:');
 	console.error();
 	console.error('merge <path/diff.json ...>');
@@ -233,6 +233,6 @@ const commands = {
 if (typeof commands[subcommand] === 'function') {
 	await commands[subcommand](...args);
 } else {
-	console.error('Running rabbit-validator without subcommand is deprecated');
+	console.error('Running rabbit-toolbelt without subcommand is deprecated');
 	commands.validate(subcommand, args[0]);
 }

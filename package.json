@@ -1,5 +1,5 @@
 {
-  "name": "rabbit-validator",
+  "name": "rabbit-toolbelt",
   "version": "1.12.0",
   "type": "module",
   "description": "Validator for the definition files of RabbitMQ",
