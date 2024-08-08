@@ -1,4 +1,4 @@
-FROM node:18-slim
+FROM node:22-slim
 
 LABEL org.opencontainers.image.description="RabbitMQ toolbelt for managing, validating and deploying your definitions.json"
 
