@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import RabbitClient from './RabbitClient.js';
 import { diffServer } from './deploy.utils.js';
 
@@ -43,11 +44,20 @@ const sleep = (ms) => {
 	return new Promise((res) => setTimeout(res, ms));
 };
 
-const deployResources = async (client, changes, operation, type, operationOverride = null) => {
+const deployResources = async (client, changes, operation, type, operationOverride = null, filterFn = null) => {
+	assert(filterFn === null || typeof filterFn === 'function', 'Expected filterFn to be a function or null');
+	let skipped = [];
 	const entries = changes[operation][type];
 	if (entries.length) {
 		const result = await Promise.allSettled(
 			entries
+				.filter((...args) => {
+					if (filterFn && !filterFn(...args)) {
+						skipped.push(args[0]);
+						return false;
+					}
+					return true;
+				})
 				.map(async (resource, idx) => {
 					const op = operationOverride ?? operation;
 					if (typeof C[op][type] === 'function') {
@@ -66,6 +76,10 @@ const deployResources = async (client, changes, operation, type, operationOverri
 		const succeeded = result.filter(({ status }) => status === 'fulfilled');
 		const failed = result.filter(({ status }) => status !== 'fulfilled');
 		const failedNotice = result.length !== succeeded.length && `, ${result.length - succeeded.length} failed` || '';
+
+		if (skipped.length) {
+			console.error(`skipped ${skipped.length} ${operation} ${type} operations`);
+		}
 
 		if (operation === 'changed' && operationOverride) {
 			console.error(`${operationOverride}(for changing) ${succeeded.length} ${type}` + failedNotice);
@@ -134,9 +148,12 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	const deletedResourceCount = Object.entries(changes.deleted)
 		.reduce((acc, [/* type */, list]) => acc + list.length, 0);
 	if (!noDeletions) {
+		const notInDeletedVhost = changes.deleted?.vhosts.length ?
+			({ vhost }) => changes.deleted?.vhosts.find(({ vhost: deletedVhost }) => vhost === deletedVhost) :
+			() => true;
 		await deployResources(client, changes, 'deleted', 'topic_permissions');
-		await deployResources(client, changes, 'deleted', 'permissions');
-		await deployResources(client, changes, 'deleted', 'users');
+		await deployResources(client, changes, 'deleted', 'permissions', null, notInDeletedVhost);
+		await deployResources(client, changes, 'deleted', 'users', null, notInDeletedVhost);
 		await deployResources(client, changes, 'deleted', 'bindings');
 		await deployResources(client, changes, 'deleted', 'queues');
 		await deployResources(client, changes, 'deleted', 'exchanges');
