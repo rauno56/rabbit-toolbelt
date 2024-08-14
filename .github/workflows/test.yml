@@ -13,6 +13,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      rabbit:
+        image: rabbitmq:3.12.14-management
+        ports:
+        - 15672:15672
+        - 5672:5672
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -24,5 +30,10 @@ jobs:
       run: npm run test -- -c -R base -t10
     - name: Test basic CLI functionality
       run: sh test/test-cli.sh && echo "All OK!"
+    - name: Test e2e cases
+      run: |
+        npm link
+        bash test/test-e2e.sh test/e2e/changed-exchange-with-bindings
+        bash test/test-e2e.sh test/e2e/delete-vhost
     - name: Lint
       run: npm run lint
