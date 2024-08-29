@@ -1,5 +1,25 @@
 import { strict as assert } from 'node:assert';
 
+const deprecatedPrefix = 'RABVAL_';
+
+/**
+ * @param {string} envVar
+ * @returns {boolean}
+ */
+const isDeprecatedEnvVar = (envVar) => {
+	assert(typeof envVar, 'string');
+	return envVar.startsWith(deprecatedPrefix);
+};
+
+/**\
+ * @param {string} stableVar
+ * @returns {string}
+ */
+const getDeprecatedEnvVar = (stableVar) => {
+	assert(typeof stableVar, 'string');
+	return stableVar.replace(/^RTB_/, deprecatedPrefix);
+};
+
 const isInRange = (value, min, max) => {
 	return min <= value && value <= max;
 };
@@ -7,6 +27,10 @@ const isInRange = (value, min, max) => {
 function getListFromEnv(envVar, sep = ',') {
 	assert(typeof envVar, 'string');
 	if (!process.env[envVar]) {
+		// TODO: remove after deprecation period
+		if (!isDeprecatedEnvVar(envVar)) {
+			return getListFromEnv(getDeprecatedEnvVar(envVar), sep);
+		}
 		return [];
 	}
 	return process.env[envVar]
@@ -19,6 +43,10 @@ function getListFromEnv(envVar, sep = ',') {
  * @returns {number}
  */
 function getFloatFromEnv(envVar, defaultValue) {
+	// TODO: remove after deprecation period
+	if (!isDeprecatedEnvVar(envVar)) {
+		return getFloatFromEnv(getDeprecatedEnvVar(envVar), defaultValue);
+	}
 	return parseFloat(process.env[envVar]) || defaultValue;
 }
 
@@ -28,6 +56,10 @@ function getFloatFromEnv(envVar, defaultValue) {
  * @returns {number}
  */
 function getIntFromEnv(envVar, defaultValue) {
+	// TODO: remove after deprecation period
+	if (!isDeprecatedEnvVar(envVar)) {
+		return getIntFromEnv(getDeprecatedEnvVar(envVar), defaultValue);
+	}
 	return parseInt(process.env[envVar]) || defaultValue;
 }
 
@@ -39,34 +71,38 @@ function getIntFromEnv(envVar, defaultValue) {
 function getRegexpFromEnv(envVar, defaultValue = null) {
 	const value = process.env[envVar];
 	if (!value) {
+		// TODO: remove after deprecation period
+		if (!isDeprecatedEnvVar(envVar)) {
+			return getRegexpFromEnv(getDeprecatedEnvVar(envVar), defaultValue);
+		}
 		return defaultValue;
 	}
 	return new RegExp(value);
 }
 
-const defaultPattern = getRegexpFromEnv('RABVAL_PATTERN');
-const defaultAllowList = getListFromEnv('RABVAL_STRING_ALLOW', ',');
+const defaultPattern = getRegexpFromEnv('RTB_PATTERN');
+const defaultAllowList = getListFromEnv('RTB_STRING_ALLOW', ',');
 
 const C = {
-	requestDelay: getIntFromEnv('RABVAL_REQUEST_DELAY', 9),
+	requestDelay: getIntFromEnv('RTB_REQUEST_DELAY', 9),
 	unusedFailureThreshold: {
-		vhost: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_VHOST', 0.3),
-		exchange: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_EXCHANGE', 0.3),
-		queue: getFloatFromEnv('RABVAL_UNUSED_FAIL_THRESHOLD_QUEUE', 0.3),
+		vhost: getFloatFromEnv('RTB_UNUSED_FAIL_THRESHOLD_VHOST', 0.3),
+		exchange: getFloatFromEnv('RTB_UNUSED_FAIL_THRESHOLD_EXCHANGE', 0.3),
+		queue: getFloatFromEnv('RTB_UNUSED_FAIL_THRESHOLD_QUEUE', 0.3),
 	},
 	pattern: {
-		vhosts: getRegexpFromEnv('RABVAL_PATTERN_VHOSTS', defaultPattern),
-		users: getRegexpFromEnv('RABVAL_PATTERN_USERS', defaultPattern),
-		policies: getRegexpFromEnv('RABVAL_PATTERN_POLICIES', defaultPattern),
-		queues: getRegexpFromEnv('RABVAL_PATTERN_QUEUES', defaultPattern),
-		exchanges: getRegexpFromEnv('RABVAL_PATTERN_EXCHANGES', defaultPattern),
+		vhosts: getRegexpFromEnv('RTB_PATTERN_VHOSTS', defaultPattern),
+		users: getRegexpFromEnv('RTB_PATTERN_USERS', defaultPattern),
+		policies: getRegexpFromEnv('RTB_PATTERN_POLICIES', defaultPattern),
+		queues: getRegexpFromEnv('RTB_PATTERN_QUEUES', defaultPattern),
+		exchanges: getRegexpFromEnv('RTB_PATTERN_EXCHANGES', defaultPattern),
 	},
 	normalStringAllowList: defaultAllowList,
 	nameAllowList: {
-		vhosts: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_VHOSTS', ',')),
-		users: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_USERS', ',')),
-		queues: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_QUEUES', ',')),
-		exchanges: defaultAllowList.concat(getListFromEnv('RABVAL_PATTERN_ALLOW_EXCHANGES', ',')),
+		vhosts: defaultAllowList.concat(getListFromEnv('RTB_PATTERN_ALLOW_VHOSTS', ',')),
+		users: defaultAllowList.concat(getListFromEnv('RTB_PATTERN_ALLOW_USERS', ',')),
+		queues: defaultAllowList.concat(getListFromEnv('RTB_PATTERN_ALLOW_QUEUES', ',')),
+		exchanges: defaultAllowList.concat(getListFromEnv('RTB_PATTERN_ALLOW_EXCHANGES', ',')),
 	},
 };
 

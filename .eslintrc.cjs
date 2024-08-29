@@ -28,6 +28,10 @@ module.exports = {
 		'no-trailing-spaces': [
 			'error',
 		],
+		'no-undef': [
+			'error',
+			{ 'typeof': true },
+		],
 		'comma-dangle': ['error', {
 			'arrays': 'always-multiline',
 			'objects': 'always-multiline',

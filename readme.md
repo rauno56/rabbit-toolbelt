@@ -29,10 +29,10 @@ Such statistics can be fetch from Prometheus API for example.
 
 #### Relevant environment variables
 
-- `RABVAL_STRING_ALLOW`: a comma-separated list of names to allow through the name validation regardless of their value. Example: `invalid but passable,??test-dont-delete??`.
-- `RABVAL_UNUSED_FAIL_THRESHOLD_VHOST`: Threshold(float) for unused **vhost** ratio for failing the run. Example: `0.3`.
-- `RABVAL_UNUSED_FAIL_THRESHOLD_EXCHANGE`: Threshold(float) for unused **exchange** ratio for failing the run. Example: `0.3`.
-- `RABVAL_UNUSED_FAIL_THRESHOLD_QUEUE`: Threshold(float) for unused **queue** ratio for failing the run. Example: `0.3`.
+- `RTB_STRING_ALLOW`: a comma-separated list of names to allow through the name validation regardless of their value. Example: `invalid but passable,??test-dont-delete??`.
+- `RTB_UNUSED_FAIL_THRESHOLD_VHOST`: Threshold(float) for unused **vhost** ratio for failing the run. Example: `0.3`.
+- `RTB_UNUSED_FAIL_THRESHOLD_EXCHANGE`: Threshold(float) for unused **exchange** ratio for failing the run. Example: `0.3`.
+- `RTB_UNUSED_FAIL_THRESHOLD_QUEUE`: Threshold(float) for unused **queue** ratio for failing the run. Example: `0.3`.
 
 ### Resource-aware diffing
 
