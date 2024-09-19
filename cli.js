@@ -50,11 +50,7 @@ if (opts.v || opts.version) {
 	process.exit(0);
 }
 
-if (
-	!subcommand
-	|| opts.h
-	|| opts.help
-) {
+const showHelpAndExit = (exitCode = 1) => {
 	console.error('usage: rabbit-toolbelt <COMMAND> <OPTIONS>');
 	console.error('Commands:');
 	console.error();
@@ -104,7 +100,15 @@ if (
 	console.error('         --recreate-changed\tSince resources are immutable in RabbitMQ, changing properties requires deletion and recreation.');
 	console.error('                           \tBy default changes are not deployed, but this option turns it on.');
 	console.error('                           \tUse with caution because it will affect channels actively using those resources.');
-	process.exit(1);
+	process.exit(exitCode);
+};
+
+if (
+	subcommand === 'help'
+	|| opts.h
+	|| opts.help
+) {
+	showHelpAndExit(0);
 }
 
 assert(!opts.pretty || !opts.json, '--pretty and --json options are exclusive.');
@@ -248,6 +252,5 @@ const commands = {
 if (typeof commands[subcommand] === 'function') {
 	await commands[subcommand](...args);
 } else {
-	console.error('Running rabbit-toolbelt without subcommand is deprecated');
-	commands.validate(subcommand, args[0]);
+	showHelpAndExit(1);
 }
