@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 
 assert_succeeds () {
-	(node cli.js $@) || exit 1
+	(node cli.js validate $@) || exit 1
 	echo
 }
 
 assert_fails () {
-	! (node cli.js $@) && echo "Expected failure: OK" || exit 1
+	! (node cli.js validate $@) && echo "Expected failure: OK" || exit 1
 	echo
 }
 
