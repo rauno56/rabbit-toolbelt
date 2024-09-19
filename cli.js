@@ -8,6 +8,7 @@ import apply from './src/apply.js';
 import deploy from './src/deploy.js';
 import diff from './src/diff.js';
 import merge from './src/merge.js';
+import config from './src/config.js';
 import { validateAll } from './src/validate.js';
 import { getOpt, getOptValue, readJSONSync, readIgnoreFileSync, writeJSONSync, copy } from './src/utils.js';
 import { resolveDefinitions } from './src/resolveDefinitions.js';
@@ -57,6 +58,11 @@ if (
 	console.error('usage: rabbit-toolbelt <COMMAND> <OPTIONS>');
 	console.error('Commands:');
 	console.error();
+	console.error('config');
+	console.error('         Print configuration gathered from environment variables.');
+	console.error('         Options:');
+	console.error('         --json  \tOutput JSON to make parsing the result with another programm easier.');
+	console.error('         --pretty\tForce pretty-printed output.');
 	console.error('merge <path/diff.json ...>');
 	console.error('         Takes multiple JSON diff files, merges them and outputs the result to stdout. Duplicate resources are left in by default.');
 	console.error('         Options:');
@@ -104,6 +110,15 @@ if (
 assert(!opts.pretty || !opts.json, '--pretty and --json options are exclusive.');
 
 const commands = {
+	config: async () => {
+		if (!opts.pretty && (opts.json || !process.stdout.isTTY)) {
+			return console.log(JSON.stringify(config));
+		}
+
+		for (const [opt, value] of Object.entries(config)) {
+			console.error(`${opt}:`, value);
+		}
+	},
 	validate: async (filePath, usageFilePath) => {
 		const definitions = await resolveDefinitions(filePath);
 		const usageStats = typeof usageFilePath === 'string' ? readJSONSync(path.resolve(usageFilePath)) : null;
