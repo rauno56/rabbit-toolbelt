@@ -44,7 +44,7 @@ function getListFromEnv(envVar, sep = ',') {
  */
 function getFloatFromEnv(envVar, defaultValue) {
 	// TODO: remove after deprecation period
-	if (!isDeprecatedEnvVar(envVar)) {
+	if (!process.env[envVar] && !isDeprecatedEnvVar(envVar)) {
 		return getFloatFromEnv(getDeprecatedEnvVar(envVar), defaultValue);
 	}
 	return parseFloat(process.env[envVar]) || defaultValue;
@@ -57,7 +57,7 @@ function getFloatFromEnv(envVar, defaultValue) {
  */
 function getIntFromEnv(envVar, defaultValue) {
 	// TODO: remove after deprecation period
-	if (!isDeprecatedEnvVar(envVar)) {
+	if (!process.env[envVar] && !isDeprecatedEnvVar(envVar)) {
 		return getIntFromEnv(getDeprecatedEnvVar(envVar), defaultValue);
 	}
 	return parseInt(process.env[envVar]) || defaultValue;
