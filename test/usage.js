@@ -4,6 +4,8 @@ import { describe, it } from 'node:test';
 import { copy, readJSONSync } from '../src/utils.js';
 import assertUsage from '../src/usage.js';
 
+import C from '../src/config.js';
+
 const valid = readJSONSync('./fixtures/full.json');
 const usage = [
 	{ vhost: '/', queue: 'defect_queue', exchange: 'defect_direct' },
@@ -41,6 +43,7 @@ describe('asserting usage', () => {
 				name: 'unused_vhost3',
 			});
 
+			C.unusedFailureThreshold.vhost = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused vhost/);
@@ -53,6 +56,7 @@ describe('asserting usage', () => {
 				name: 'unused_queue',
 			});
 
+			C.unusedFailureThreshold.queue = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused queue/);
@@ -73,6 +77,7 @@ describe('asserting usage', () => {
 				name: 'unused_exchange3',
 			});
 
+			C.unusedFailureThreshold.exchange = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused exchange/);

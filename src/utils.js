@@ -61,12 +61,18 @@ export const parseUrl = (input) => {
 	};
 };
 
-export const assertStr = (str, key) => assert.equal(
-	typeof str, 'string',
-	`Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`
-);
-export const assertStrObj = (obj, key) => assert.equal(
-	typeof obj[key], 'string',
-	`Expected "${key}" on ${inspect(obj)} to be string: ${obj[key]}`
-);
-export const assertObj = (obj) => assert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
+export const assertStr = (str, key) => {
+	assert.equal(
+		typeof str, 'string',
+		`Expected ${key ? ('"' + key + '" ') : ''}to be string: ${str}`
+	);
+};
+export const assertStrObj = (obj, key) => {
+	assert.equal(
+		typeof obj[key], 'string',
+		`Expected "${key}" on ${inspect(obj)} to be string: ${obj[key]}`
+	);
+};
+export const assertObj = (obj) => {
+	assert.equal(obj && typeof obj, 'object', `Expected to be object: ${obj}`);
+};
