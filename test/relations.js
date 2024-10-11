@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { describe, it } from 'node:test';
+import { describe, it, before, after, mock } from 'node:test';
 
 import { copy, readJSONSync } from '../src/utils.js';
 import assertRelations from '../src/relations.js';
@@ -7,6 +7,26 @@ import assertRelations from '../src/relations.js';
 const valid = readJSONSync('./fixtures/full.json');
 
 describe('asserting relations', () => {
+	before(() => {
+		mock.method(console, 'log', () => {});
+		mock.method(console, 'warn', () => {});
+		mock.method(console, 'error', () => {});
+	});
+
+	after(() => {
+		mock.reset();
+	});
+
+	before(() => {
+		mock.method(console, 'log', () => {});
+		mock.method(console, 'warn', () => {});
+		mock.method(console, 'error', () => {});
+	});
+
+	after(() => {
+		mock.reset();
+	});
+
 	it('fn exists and takes an object', () => {
 		const def = copy(valid);
 		assertRelations(def);

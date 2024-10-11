@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { describe, it } from 'node:test';
+import { describe, it, before, after, mock } from 'node:test';
 
 import { copy, readJSONSync } from '../src/utils.js';
 import assertUsage from '../src/usage.js';
@@ -17,6 +17,16 @@ const usage = [
 const opts = true;
 
 describe('asserting usage', () => {
+	before(() => {
+		mock.method(console, 'log', () => {});
+		mock.method(console, 'warn', () => {});
+		mock.method(console, 'error', () => {});
+	});
+
+	after(() => {
+		mock.reset();
+	});
+
 	it('fn exists and takes an object and an array', () => {
 		const def = copy(valid);
 		assertUsage(def, usage, opts);

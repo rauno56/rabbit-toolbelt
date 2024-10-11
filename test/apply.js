@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { describe, it } from 'node:test';
+import { describe, it, before, after, mock } from 'node:test';
 
 import { copy, readJSONSync } from '../src/utils.js';
 import { apply as _apply, revert as _revert } from '../src/apply.js';
@@ -25,6 +25,16 @@ changedDefinitions.queues.push({
 });
 
 describe('apply', () => {
+	before(() => {
+		mock.method(console, 'log', () => {});
+		mock.method(console, 'warn', () => {});
+		mock.method(console, 'error', () => {});
+	});
+
+	after(() => {
+		mock.reset();
+	});
+
 	it('fn exists and takes 2 args', () => {
 		assert.equal(typeof apply, 'function');
 		assert.equal(apply.length, 2);
