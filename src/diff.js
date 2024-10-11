@@ -4,7 +4,26 @@ import { isDeepStrictEqual, inspect } from 'util';
 import Index from './Index.js';
 import HashSet from './HashSet.js';
 
-const diffMapsConsuming = (before, after) => {
+const isVhostEqual = (a, b) => {
+	if (!!a !== !!b) {
+		return false;
+	}
+	if (a.name !== b.name) {
+		return false;
+	}
+	if (!isDeepStrictEqual(a.tags || [], b.tags || [])) {
+		return false;
+	}
+	if ((a.description || '') !== (b.description || '')) {
+		return false;
+	}
+	if ((a.default_queue_type || 'undefined') !== (b.default_queue_type || 'undefined')) {
+		return false;
+	}
+	return true;
+};
+
+const diffMapsConsuming = (before, after, isEqual = isDeepStrictEqual) => {
 	const added = [];
 	const deleted = [];
 	const changed = [];
@@ -19,7 +38,7 @@ const diffMapsConsuming = (before, after) => {
 		before.delete(afterItem);
 		if (beforeItem === undefined) {
 			added.push(afterItem);
-		} else if (!isDeepStrictEqual(beforeItem, afterItem)) {
+		} else if (!isEqual(beforeItem, afterItem)) {
 			changed.push({ before: beforeItem, after: afterItem });
 		} else {
 			unaffected.push(afterItem);
@@ -60,15 +79,15 @@ const diff = (beforeDef, afterDef, ignoreList = null) => {
 	const changed = makeChangeMap();
 	const unaffected = makeChangeMap();
 
-	const collectDiff = (key, beforeMap, afterMap) => {
-		const changes = diffMapsConsuming(beforeMap, afterMap);
+	const collectDiff = (key, beforeMap, afterMap, isEqual = isDeepStrictEqual) => {
+		const changes = diffMapsConsuming(beforeMap, afterMap, isEqual);
 		added[key].push(...changes.added);
 		deleted[key].push(...changes.deleted);
 		changed[key].push(...changes.changed);
 		unaffected[key].push(...changes.unaffected);
 	};
 
-	collectDiff('vhosts', before.vhosts, after.vhosts);
+	collectDiff('vhosts', before.vhosts, after.vhosts, isVhostEqual);
 	collectDiff('queues', before.queues, after.queues);
 	collectDiff('exchanges', before.exchanges, after.exchanges);
 	collectDiff('bindings', before.bindings, after.bindings);
