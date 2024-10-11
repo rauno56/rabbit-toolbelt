@@ -1,6 +1,6 @@
 {
   "name": "rabbit-toolbelt",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "type": "module",
   "description": "Validator for the definition files of RabbitMQ",
   "main": "src/validate.js",
