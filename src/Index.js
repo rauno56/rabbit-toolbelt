@@ -303,8 +303,7 @@ class Index {
 		for (const res of Object.keys(indexedResources)) {
 			if (typeof definitions[res] !== 'undefined') {
 				for (const item of definitions[res]) {
-					// will not report failure because it'd already be caught by the structural validation
-					try { this[res].hash(item); } catch { continue; }
+					try { this[res].hash(item); } catch (err) { console.error('failed to index', item, err.message); continue; }
 					if (ignoreIndex && isIgnored[res](ignoreIndex, item)) { continue; }
 					item[SOURCE_SYM] = sourcePath;
 					assert.unique[res](this, item);
