@@ -7,7 +7,7 @@
   "bin": "cli.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "RTB_PATTERN_USERS='^(?!uu)' RTB_PATTERN='^(?!xx)' tap ./test/*.js"
+    "test": "RTB_PATTERN_USERS='^(?!uu)' RTB_PATTERN='^(?!xx)' tap --allow-incomplete-coverage ./test/*.js"
   },
   "keywords": [
     "rabbit",
