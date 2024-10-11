@@ -31,15 +31,53 @@ describe('diff', () => {
 		const after = copy(valid);
 		before.vhosts.push({
 			name: 'deleted',
+		}, {
+			name: 'changed description',
+			description: 'before description',
+		}, {
+			name: 'changed tags',
+			tags: ['b', 'a'],
 		});
 		after.vhosts.push({
 			name: 'new',
+		}, {
+			name: 'changed description',
+			description: 'after description',
+		}, {
+			name: 'changed tags',
+			tags: ['a', 'b'],
 		});
-		const { added: { vhosts: added }, deleted: { vhosts: deleted } } = diff(before, after);
+		const { added: { vhosts: added }, deleted: { vhosts: deleted }, changed: { vhosts: changed } } = diff(before, after);
 		assert.equal(added.length, 1);
 		assert.equal(added[0].name, 'new');
 		assert.equal(deleted.length, 1);
 		assert.equal(deleted[0].name, 'deleted');
+		assert.equal(changed.length, 2);
+
+		assert.equal(changed[0].before.description, 'before description');
+		assert.equal(changed[0].before.name, 'changed description');
+		assert.equal(changed[0].after.description, 'after description');
+
+		assert.deepEqual(changed[1].before.tags, ['b', 'a']);
+		assert.equal(changed[1].before.name, 'changed tags');
+		assert.deepEqual(changed[1].after.tags, ['a', 'b']);
+	});
+
+	it('ignores API changes between 3.10 and later versions', () => {
+		const before = copy(valid);
+		const after = copy(valid);
+		before.vhosts.push(
+			{ name: 'changed1' },
+			{ name: 'changed2' },
+		);
+		after.vhosts.push(
+			{ name: 'changed1' },
+			{ name: 'changed2', description: '', tags: [], metadata: { description: '', tags: [] } },
+		);
+		const { added: { vhosts: added }, deleted: { vhosts: deleted }, changed: { vhosts: changed } } = diff(before, after);
+		assert.equal(added.length, 0);
+		assert.equal(deleted.length, 0);
+		assert.equal(changed.length, 0);
 	});
 
 	it('catches changes to users', () => {

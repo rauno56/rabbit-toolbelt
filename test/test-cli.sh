@@ -6,7 +6,7 @@ assert_succeeds () {
 }
 
 assert_fails () {
-	! (node cli.js validate $@) && echo "Expected failure: OK" || exit 1
+	! (node cli.js validate $@ && echo "Expected failure: OK") || exit 1
 	echo
 }
 

@@ -34,6 +34,7 @@ const C = {
 		topic_permissions: (r) => ['DELETE', url`/api/topic-permissions/${r.vhost}/${r.user}`],
 	},
 	changed: {
+		vhosts: (r) => ['PUT', url`/api/vhosts/${r.name}`],
 		users: (r) => ['PUT', url`/api/users/${r.name}`],
 		permissions: (r) => ['PUT', url`/api/permissions/${r.vhost}/${r.user}`],
 		topic_permissions: (r) => ['PUT', url`/api/topic-permissions/${r.vhost}/${r.user}`],
@@ -128,6 +129,7 @@ const deploy = async (serverBaseUrl, definitions, { dryRun = false, noDeletions 
 	await deployResources(client, changes, 'added', 'exchanges');
 	await deployResources(client, changes, 'added', 'queues');
 
+	await deployResources(client, changes, 'changed', 'vhosts');
 	await deployResources(client, changes, 'changed', 'users');
 	if (recreateChanged) {
 		await deployResources(client, changes, 'changed', 'exchanges', 'deleted');

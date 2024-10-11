@@ -1,8 +1,10 @@
 import { strict as assert } from 'assert';
-import { describe, it } from 'node:test';
+import { describe, it, before, after, mock } from 'node:test';
 
 import { copy, readJSONSync } from '../src/utils.js';
 import assertUsage from '../src/usage.js';
+
+import C from '../src/config.js';
 
 const valid = readJSONSync('./fixtures/full.json');
 const usage = [
@@ -15,6 +17,16 @@ const usage = [
 const opts = true;
 
 describe('asserting usage', () => {
+	before(() => {
+		mock.method(console, 'log', () => {});
+		mock.method(console, 'warn', () => {});
+		mock.method(console, 'error', () => {});
+	});
+
+	after(() => {
+		mock.reset();
+	});
+
 	it('fn exists and takes an object and an array', () => {
 		const def = copy(valid);
 		assertUsage(def, usage, opts);
@@ -41,6 +53,7 @@ describe('asserting usage', () => {
 				name: 'unused_vhost3',
 			});
 
+			C.unusedFailureThreshold.vhost = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused vhost/);
@@ -53,6 +66,7 @@ describe('asserting usage', () => {
 				name: 'unused_queue',
 			});
 
+			C.unusedFailureThreshold.queue = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused queue/);
@@ -73,6 +87,7 @@ describe('asserting usage', () => {
 				name: 'unused_exchange3',
 			});
 
+			C.unusedFailureThreshold.exchange = 0.3;
 			assert.throws(() => {
 				assertUsage(def, usage, opts);
 			}, /High ratio of unused exchange/);
