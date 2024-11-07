@@ -59,6 +59,12 @@ const rootStructure = {
 	})),
 	vhosts: array(object({
 		name: genPatternedValidator(C.pattern.vhosts, C.nameAllowList.vhosts)(),
+		description: optional(string()),
+		tags: optional(array(string())),
+		metadata: optional(object({
+			description: string(),
+			tags: array(string()),
+		})),
 	})),
 	permissions: array(object({
 		user: normalString(),

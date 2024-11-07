@@ -170,7 +170,7 @@ class Index {
 			.map((row) => {
 				return row.split('/');
 			})
-			.forEach(([/* part before the first / */ , type, ...rargs]) => {
+			.forEach(([/* part before the first / */, type, ...rargs]) => {
 				const args = rargs.map(decodeURIComponent);
 				if (type === 'vhosts' || type === 'users') {
 					return index[type].add({ name: args[0] });
