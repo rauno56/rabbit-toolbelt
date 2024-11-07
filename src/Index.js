@@ -263,6 +263,25 @@ class Index {
 		return this.merge(definitions, throwOnFirstError, ignoreIndex, sourcePath);
 	}
 
+	getVersion() {
+		const altFields = [
+			'rabbitmq_version',
+			'product_version',
+		];
+		let version = this.meta.rabbit_version;
+		for (const field of altFields) {
+			const val = this.meta[field];
+			if (val) {
+				if (!version) {
+					version = val;
+				} else if (version !== val) {
+					console.warn(`Multiple different declared versions: ${version}, ${val}(${field})`);
+				}
+			}
+		}
+		return version;
+	}
+
 	merge(definitions, throwOnFirstError = true, ignoreIndex = null, sourcePath = null) {
 		nodeAssert.ok(definitions && typeof definitions, 'object');
 		nodeAssert.equal(definitions instanceof Index, false, '`merge` accepts definitions, not built Index');

@@ -74,6 +74,12 @@ const diff = (beforeDef, afterDef, ignoreList = null) => {
 	const before = Index.fromDefinitions(beforeDef, false, ignoreIndex);
 	const after = Index.fromDefinitions(afterDef, false, ignoreIndex);
 
+	const beforeVersion = before.getVersion();
+	const afterVersion = after.getVersion();
+	if (beforeVersion !== afterVersion) {
+		console.warn(`Version in before(${beforeVersion}) different from after(${afterVersion}).`);
+	}
+
 	const added = makeChangeMap();
 	const deleted = makeChangeMap();
 	const changed = makeChangeMap();
