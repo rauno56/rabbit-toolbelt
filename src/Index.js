@@ -32,7 +32,7 @@ export const detectResourceType = (resource) => {
 	if (typeof resource.vhost === 'string' && typeof resource.durable === 'boolean') {
 		return 'queues';
 	}
-	if (typeof resource.name === 'string' && Object.keys(resource).length === 1) {
+	if (typeof resource.name === 'string') {
 		return 'vhosts';
 	}
 	if (typeof resource.password_hash === 'string') {
