@@ -9,7 +9,7 @@ const pushToMapOfArrays = (map, key, item) => {
 	nodeAssert.ok(map instanceof Map);
 	nodeAssert.equal(typeof key, 'string');
 	nodeAssert.equal(typeof item, 'object');
-	let array = map.get(key);
+	const array = map.get(key);
 	if (!array) {
 		map.set(key, [item]);
 	} else {
