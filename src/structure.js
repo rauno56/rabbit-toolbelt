@@ -106,7 +106,10 @@ const rootStructure = {
 		arguments: optional(object({
 			'x-dead-letter-exchange': optional(string()),
 			'x-dead-letter-routing-key': optional(string()),
+			'x-delivery-limit':	optional(number()),
 			'x-expires': optional(number()),
+			'x-initial-cluster-size':	optional(number()),
+			'x-max-age':	optional(union([number(), string()])),
 			'x-max-length':	optional(number()),
 			'x-max-length-bytes':	optional(number()),
 			'x-max-priority':	optional(number()),
@@ -117,6 +120,9 @@ const rootStructure = {
 			'x-queue-type': optional(string()),
 			'x-queue-version':	optional(number()),
 			'x-single-active-consumer':	optional(boolean()),
+			'x-stream-filter-size-bytes':	optional(number()),
+			'x-stream-max-segment-size-bytes':	optional(number()),
+			'x-stream-offset': optional(union([number(), string()])),
 		})),
 	})),
 	exchanges: array(object(
@@ -128,6 +134,7 @@ const rootStructure = {
 			auto_delete: boolean(),
 			internal: optional(boolean()),
 			arguments: optional(object({
+				'x-dead-letter-exchange': optional(string()),
 				'alternate-exchange': optional(string()),
 			})),
 		},

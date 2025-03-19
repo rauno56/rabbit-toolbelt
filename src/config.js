@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import process from 'node:process';
 
 const deprecatedPrefix = 'RABVAL_';
 
