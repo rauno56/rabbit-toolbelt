@@ -322,7 +322,7 @@ class Index {
 		for (const res of Object.keys(indexedResources)) {
 			if (typeof definitions[res] !== 'undefined') {
 				for (const item of definitions[res]) {
-					try { this[res].hash(item); } catch (err) { console.error('failed to index', item, err.message); continue; }
+					try { this[res].hash(item); } catch (err) { console.error(`failed to index @ ${sourcePath}`, item, err.message); continue; }
 					if (ignoreIndex && isIgnored[res](ignoreIndex, item)) { continue; }
 					item[SOURCE_SYM] = sourcePath;
 					assert.unique[res](this, item);
