@@ -1,5 +1,5 @@
-import assert from 'assert/strict';
-import { isDeepStrictEqual, inspect } from 'util';
+import assert from 'node:assert/strict';
+import { isDeepStrictEqual, inspect } from 'node:util';
 
 import Index from './Index.js';
 import HashSet from './HashSet.js';
