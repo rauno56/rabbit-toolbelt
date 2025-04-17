@@ -61,6 +61,9 @@ export const parseUrl = (input) => {
 	};
 };
 
+export const noop = () => {};
+export const returnEmptyString = () => '';
+
 export const assertStr = (str, key) => {
 	assert.equal(
 		typeof str, 'string',

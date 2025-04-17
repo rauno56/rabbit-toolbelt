@@ -1,19 +1,20 @@
-import assert from 'assert/strict';
+import assert from 'node:assert/strict';
+import { noop, returnEmptyString } from './utils.js';
 
 export class HashSet extends Map {
-	hash = null;
-	onAdd = null;
+	hash = returnEmptyString;
+	onAdd = noop;
 
-	constructor(hash, onAdd) {
+	constructor(hash, onAddOrElements) {
 		super();
 		assert.equal(typeof hash, 'function');
 		this.hash = hash;
-		if (onAdd) {
-			if (typeof onAdd === 'function') {
-				this.onAdd = onAdd;
+		if (onAddOrElements) {
+			if (typeof onAddOrElements === 'function') {
+				this.onAdd = onAddOrElements;
 			} else {
-				assert.equal(typeof onAdd[Symbol.iterator], 'function');
-				for (const item of onAdd) {
+				assert.equal(typeof onAddOrElements[Symbol.iterator], 'function');
+				for (const item of onAddOrElements) {
 					this.add(item);
 				}
 			}
@@ -26,7 +27,7 @@ export class HashSet extends Map {
 	deleteByHash(hash) { return super.delete(hash); }
 	delete(item) { return super.delete(this.hash(item)); }
 	add(item) {
-		if (this.onAdd) { this.onAdd(item); }
+		this.onAdd(item);
 		return this.set(this.hash(item), item);
 	}
 
