@@ -3,6 +3,7 @@ import * as nodeAssert from 'node:assert/strict';
 import { assertObj, assertStr } from './utils.js';
 import { HashSet } from './HashSet.js';
 import failureCollector from './failureCollector.js';
+import { IndexingError } from './errors.js';
 
 export const SOURCE_SYM = Symbol.for('SOURCE_PATH');
 const pushToMapOfArrays = (map, key, item) => {
@@ -321,8 +322,8 @@ class Index {
 
 		for (const res of Object.keys(indexedResources)) {
 			if (typeof definitions[res] !== 'undefined') {
-				for (const item of definitions[res]) {
-					try { this[res].hash(item); } catch (err) { console.error(`failed to index @ ${sourcePath}`, item, err.message); continue; }
+				for (const [idx, item] of definitions[res].entries()) {
+					try { this[res].hash(item); } catch (err) { throw IndexingError.from(`${res}.${idx}`, item, sourcePath, err); }
 					if (ignoreIndex && isIgnored[res](ignoreIndex, item)) { continue; }
 					item[SOURCE_SYM] = sourcePath;
 					assert.unique[res](this, item);

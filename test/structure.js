@@ -122,7 +122,7 @@ describe('asserting structure', () => {
 			const valid = readJSONSync('./fixtures/full.json');
 			valid.topic_permissions.push(valid.permissions[0]);
 			const failures = validateAll(valid);
-			assert.equal(failures.length, 2);
+			assert.equal(failures.length, 3);
 		});
 	});
 });
